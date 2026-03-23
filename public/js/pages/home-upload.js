@@ -13,9 +13,12 @@
     return file.name + '|' + file.size + '|' + file.lastModified;
   }
 
-  function uploadOne(url, file, onProgress) {
+  function uploadOne(url, file, subdir, onProgress) {
     var formData = new FormData();
     formData.append('file', file);
+    if (subdir) {
+      formData.append('subdir', subdir);
+    }
 
     return $.ajax({
       url: url,
@@ -44,6 +47,7 @@
     var $empty = $('#file-list-empty');
     var $btnUpload = $('#btn-upload');
     var $btnClear = $('#btn-clear');
+    var $subdir = $('#upload-subdir');
     var $toast = $('#toast');
 
     var uploadUrl = $zone.data('upload-url') || '/upload';
@@ -64,6 +68,7 @@
     function syncQueue() {
       $btnUpload.prop('disabled', queue.length === 0 || uploading);
       $btnClear.prop('disabled', queue.length === 0 || uploading);
+      $subdir.prop('disabled', uploading);
       $empty.toggle(queue.length === 0);
     }
 
@@ -181,7 +186,9 @@
         item.status = '上传中…';
         renderList();
 
-        uploadOne(uploadUrl, item.file, function (ratio) {
+        var subdirVal = ($subdir.val() || '').trim();
+
+        uploadOne(uploadUrl, item.file, subdirVal, function (ratio) {
           item.progress = ratio;
           var $row = $list.find('.file-item[data-id="' + item.id + '"]');
           $row.find('.progress-bar').css('width', Math.round(ratio * 100) + '%');

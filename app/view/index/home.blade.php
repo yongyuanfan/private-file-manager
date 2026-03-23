@@ -51,6 +51,12 @@
             <div class="hint">或点击此区域选择文件 · 不会自动上传</div>
         </div>
 
+        <div class="upload-options">
+            <label class="field-label" for="upload-subdir">存储子目录（可选）</label>
+            <input type="text" id="upload-subdir" class="field-input" name="subdir" placeholder="例如：images 或 images/2025" autocomplete="off" spellcheck="false">
+            <p class="field-hint">相对项目 <code>storage</code> 目录，仅字母、数字、下划线、连字符，多级用 <code>/</code> 分隔；上传后文件名为 UUID（保留扩展名）。</p>
+        </div>
+
         <div class="toolbar">
             <button type="button" class="btn btn-primary" id="btn-upload" disabled>开始上传</button>
             <button type="button" class="btn btn-ghost" id="btn-clear" disabled>清空列表</button>
