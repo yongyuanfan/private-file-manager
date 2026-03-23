@@ -11,12 +11,21 @@ use function base_path;
 use function json;
 use function str_starts_with;
 use function view;
+use function redirect;
 
 /**
  * 默认控制器
  */
 class IndexController
 {
+    /**
+     * 首页重定向到上传页面
+     */
+    #[Route('/', 'GET')]
+    public function index() : Response {
+        return redirect('/home');
+    }
+
     /**
      * 上传页面
      * @param Request $request
