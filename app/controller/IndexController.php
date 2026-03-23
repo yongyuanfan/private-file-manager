@@ -6,6 +6,7 @@ use support\annotation\route\Route;
 use support\Request;
 use support\Response;
 use Symfony\Component\Mime\MimeTypes;
+use Throwable;
 use function base_path;
 use function json;
 use function str_starts_with;
@@ -110,6 +111,171 @@ class IndexController
         $response->header('X-Content-Type-Options', 'nosniff');
 
         return $response->withFile($absolute);
+    }
+
+    /**
+     * 访问 storage 内图片并可选缩放：GET path 为相对 storage 路径；w、h 为最大宽/高（像素），可只传其一，等比缩小不放大。
+     * 不传 w、h 时返回原图。仅支持常见光栅格式（JPEG/PNG/GIF/WebP/BMP），不含 SVG。
+     */
+    #[Route('/image', 'GET')]
+    public function serveStorageImage(Request $request): Response
+    {
+        if (!extension_loaded('gd')) {
+            return new Response(501, ['Content-Type' => 'text/plain; charset=utf-8'], '服务器未启用 GD 扩展，无法处理图片');
+        }
+
+        $relative = (string) $request->get('path', '');
+        $absolute = $this->resolveStorageFilePath($relative);
+        if ($absolute === null) {
+            return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+
+        $info = @getimagesize($absolute);
+        if ($info === false) {
+            return new Response(415, ['Content-Type' => 'text/plain; charset=utf-8'], '无法识别为图片');
+        }
+
+        $mime = strtolower($info['mime']);
+        if (!$this->isAllowedRasterImageMime($mime)) {
+            return new Response(415, ['Content-Type' => 'text/plain; charset=utf-8'], '不支持的图片类型（请使用 JPEG/PNG/GIF/WebP/BMP）');
+        }
+
+        $reqW = $this->parseImageDimensionParam($request->get('w'));
+        $reqH = $this->parseImageDimensionParam($request->get('h'));
+
+        $srcW = $info[0];
+        $srcH = $info[1];
+        [$dstW, $dstH, $needResize] = $this->computeImageTargetSize($srcW, $srcH, $reqW, $reqH);
+
+        $basename = basename($absolute);
+        $basename = preg_replace('/["\\\\\x00-\x1F\x7F]/', '', $basename) ?: 'image';
+
+        $headers = [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $basename . '"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'public, max-age=86400',
+        ];
+
+        if (!$needResize) {
+            $response = new Response();
+            foreach ($headers as $k => $v) {
+                $response->header($k, $v);
+            }
+
+            return $response->withFile($absolute);
+        }
+
+        $body = $this->renderResizedRaster($absolute, $mime, $dstW, $dstH);
+        if ($body === null) {
+            return new Response(500, ['Content-Type' => 'text/plain; charset=utf-8'], '图片缩放失败');
+        }
+
+        return new Response(200, $headers, $body);
+    }
+
+    private const IMAGE_MAX_EDGE = 4096;
+
+    /**
+     * @param mixed $value
+     */
+    private function parseImageDimensionParam(mixed $value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+        $n = (int) $value;
+
+        return $n <= 0 ? 0 : min(self::IMAGE_MAX_EDGE, $n);
+    }
+
+    /**
+     * @return array{0: int, 1: int, 2: bool} 目标宽高、是否需要重新编码输出
+     */
+    private function computeImageTargetSize(int $srcW, int $srcH, int $reqW, int $reqH): array
+    {
+        $maxW = $reqW > 0 ? $reqW : PHP_INT_MAX;
+        $maxH = $reqH > 0 ? $reqH : PHP_INT_MAX;
+        if ($maxW === PHP_INT_MAX && $maxH === PHP_INT_MAX) {
+            return [$srcW, $srcH, false];
+        }
+
+        $ratio = min($maxW / $srcW, $maxH / $srcH, 1.0);
+        $dstW = max(1, (int) floor($srcW * $ratio));
+        $dstH = max(1, (int) floor($srcH * $ratio));
+        $needResize = $dstW !== $srcW || $dstH !== $srcH;
+
+        return [$dstW, $dstH, $needResize];
+    }
+
+    private function isAllowedRasterImageMime(string $mime): bool
+    {
+        return in_array($mime, [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/bmp',
+            'image/x-ms-bmp',
+        ], true);
+    }
+
+    private function renderResizedRaster(string $path, string $mime, int $dstW, int $dstH): ?string
+    {
+        $bin = @file_get_contents($path);
+        if ($bin === false) {
+            return null;
+        }
+
+        $src = @imagecreatefromstring($bin);
+        if ($src === false) {
+            return null;
+        }
+
+        $dst = imagecreatetruecolor($dstW, $dstH);
+        if ($dst === false) {
+            imagedestroy($src);
+
+            return null;
+        }
+
+        try {
+            $srcW = imagesx($src);
+            $srcH = imagesy($src);
+            if (in_array($mime, ['image/png', 'image/gif', 'image/webp'], true)) {
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+                $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+                imagefilledrectangle($dst, 0, 0, $dstW, $dstH, $transparent);
+                imagealphablending($dst, true);
+            } else {
+                $white = imagecolorallocate($dst, 255, 255, 255);
+                imagefilledrectangle($dst, 0, 0, $dstW, $dstH, $white);
+            }
+
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $dstW, $dstH, $srcW, $srcH);
+
+            ob_start();
+            $ok = match ($mime) {
+                'image/jpeg' => imagejpeg($dst, null, 86),
+                'image/png' => imagepng($dst, null, 6),
+                'image/gif' => imagegif($dst),
+                'image/webp' => function_exists('imagewebp') && imagewebp($dst, null, 86),
+                'image/bmp', 'image/x-ms-bmp' => function_exists('imagebmp') && imagebmp($dst, null, true),
+                default => false,
+            };
+            $out = ob_get_clean();
+            if ($ok === false || $out === false || $out === '') {
+                return null;
+            }
+
+            return $out;
+        } catch (Throwable) {
+            return null;
+        } finally {
+            imagedestroy($src);
+            imagedestroy($dst);
+        }
     }
 
     /**
