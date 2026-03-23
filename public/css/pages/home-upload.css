@@ -387,7 +387,15 @@ html[data-theme="dark"] .btn-primary {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.file-list-limit-hint {
   margin: 0 0 12px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 40rem;
 }
 
 .file-list {
@@ -408,6 +416,18 @@ html[data-theme="dark"] .btn-primary {
   background: var(--file-row-bg);
   border-radius: 10px;
   border: 1px solid var(--border);
+}
+
+.file-item--oversize {
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+
+.file-item-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--danger);
 }
 
 .file-item .meta {
@@ -476,6 +496,10 @@ html[data-theme="dark"] .btn-primary {
 
 .file-item.is-error .status {
   color: var(--danger);
+}
+
+.file-item.is-skipped .status {
+  color: var(--muted);
 }
 
 .empty-hint {

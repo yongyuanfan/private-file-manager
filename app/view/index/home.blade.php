@@ -64,6 +64,7 @@
 
         <div class="file-list-section">
             <h2>待上传列表</h2>
+            <p class="file-list-limit-hint">单文件大小不超过 10MB；超过限制的文件会在列表中标注，点击「开始上传」时将不会上传。</p>
             <p id="file-list-empty" class="empty-hint">暂无文件，请先选择或拖入文件</p>
             <ul id="file-list" class="file-list"></ul>
         </div>
