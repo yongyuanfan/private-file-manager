@@ -419,7 +419,21 @@ html[data-theme="dark"] .btn-primary {
   font-size: 0.8rem;
   line-height: 1.45;
   color: var(--muted);
-  max-width: 40rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 每条说明独立一块：避免全角分号连接时 UA 在分号处提前断行 */
+.file-list-limit-hint .limit-hint__row {
+  margin: 0 0 0.45em;
+  max-width: 100%;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.file-list-limit-hint .limit-hint__row:last-child {
+  margin-bottom: 0;
 }
 
 .file-list {

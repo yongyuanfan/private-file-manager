@@ -72,7 +72,7 @@
 
         <div class="file-list-section">
             <h2>待上传列表</h2>
-            <p class="file-list-limit-hint" id="file-list-limit-hint">正在加载上传限制说明…</p>
+            <div class="file-list-limit-hint" id="file-list-limit-hint" aria-live="polite"></div>
             <p id="file-list-empty" class="empty-hint">暂无文件，请先选择或拖入文件</p>
             <ul id="file-list" class="file-list"></ul>
         </div>

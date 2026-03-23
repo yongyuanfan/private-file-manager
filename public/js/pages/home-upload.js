@@ -14,25 +14,38 @@
     }
   }
 
-  function buildLimitHint(limits) {
-    var parts = [];
+  /**
+   * 每条单独成块渲染，避免一行内用全角「；」连接时被浏览器在分号处优先断行（未到行尾就换行）。
+   */
+  function buildLimitHintRows(limits) {
+    var rows = [];
     var maxSz = limits.max_file_size;
     if (maxSz != null && maxSz > 0) {
-      parts.push('单文件不超过 ' + formatSize(maxSz));
+      rows.push('单文件不超过 ' + formatSize(maxSz));
     } else {
-      parts.push('单文件大小以服务端校验为准（当前会员无明确上限）');
+      rows.push('单文件大小以服务端校验为准（当前会员无明确上限）');
     }
     if (limits.allowed_extensions && limits.allowed_extensions.length) {
-      parts.push('允许类型：.' + limits.allowed_extensions.join('、.'));
+      rows.push('允许类型：.' + limits.allowed_extensions.join('、.'));
     } else {
-      parts.push('允许类型：不限制（以服务端为准）');
+      rows.push('允许类型：不限制（以服务端为准）');
     }
     var used = limits.used_uploads != null ? limits.used_uploads : 0;
     var maxN = limits.max_uploads;
     if (maxN != null) {
-      parts.push('本周期还可上传约 ' + Math.max(0, maxN - used) + ' 个（已用 ' + used + '/' + maxN + '）');
+      rows.push('本周期还可上传约 ' + Math.max(0, maxN - used) + ' 个（已用 ' + used + '/' + maxN + '）');
     }
-    return parts.join('；') + '。超过限制的文件会在列表中标注，上传时将跳过或失败。';
+    rows.push('超过限制的文件会在列表中标注，上传时将跳过或失败。');
+    return rows;
+  }
+
+  function renderLimitHint($el, limits) {
+    if (!$el.length) return;
+    var rows = buildLimitHintRows(limits);
+    $el.empty();
+    rows.forEach(function (text) {
+      $el.append($('<p class="limit-hint__row" />').text(text));
+    });
   }
 
   function formatSize(bytes) {
@@ -90,9 +103,7 @@
       limits.max_file_size != null && limits.max_file_size > 0
         ? limits.max_file_size
         : DEFAULT_MAX_BYTES;
-    if ($limitHint.length) {
-      $limitHint.text(buildLimitHint(limits));
-    }
+    renderLimitHint($limitHint, limits);
 
     var allowedExtSet = null;
     if (limits.allowed_extensions && limits.allowed_extensions.length) {
