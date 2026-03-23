@@ -5,8 +5,10 @@ namespace app\controller;
 use support\annotation\route\Route;
 use support\Request;
 use support\Response;
+use Symfony\Component\Mime\MimeTypes;
 use function base_path;
 use function json;
+use function str_starts_with;
 use function view;
 
 /**
@@ -77,6 +79,40 @@ class IndexController
     }
 
     /**
+     * 访问 storage 内文件：GET 参数 path 为相对 storage 的路径。
+     * 浏览器可直接展示的类型（如常见图片、PDF、音视频、纯文本）使用 inline，其余为 attachment 下载。
+     */
+    #[Route('/file', 'GET')]
+    public function serveStorageFile(Request $request): Response
+    {
+        $relative = (string) $request->get('path', '');
+        $absolute = $this->resolveStorageFilePath($relative);
+        if ($absolute === null) {
+            return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+
+        $mimeTypes = new MimeTypes();
+        $mime = $mimeTypes->guessMimeType($absolute) ?? 'application/octet-stream';
+        $basename = basename($absolute);
+        $basename = preg_replace('/["\\\\\x00-\x1F\x7F]/', '', $basename);
+        if ($basename === '') {
+            $basename = 'file';
+        }
+
+        $inline = $this->isBrowserInlineMime($mime);
+        $disposition = $inline
+            ? 'inline; filename="' . $basename . '"'
+            : 'attachment; filename="' . $basename . '"';
+
+        $response = new Response();
+        $response->header('Content-Type', $mime);
+        $response->header('Content-Disposition', $disposition);
+        $response->header('X-Content-Type-Options', 'nosniff');
+
+        return $response->withFile($absolute);
+    }
+
+    /**
      * 生成 RFC 4122 版本 4 的 UUID 字符串。
      * @return string
      */
@@ -119,5 +155,64 @@ class IndexController
         }
 
         return implode('/', $parts);
+    }
+
+    /**
+     * 将相对路径解析为 storage 下的绝对文件路径；非法或不存在则返回 null。
+     */
+    private function resolveStorageFilePath(string $raw): ?string
+    {
+        $raw = trim(str_replace('\\', '/', $raw), '/');
+        if ($raw === '') {
+            return null;
+        }
+        $parts = array_values(array_filter(explode('/', $raw), static fn ($p) => $p !== '' && $p !== '.' && $p !== '..'));
+        if ($parts === [] || count($parts) > 32) {
+            return null;
+        }
+        foreach ($parts as $p) {
+            if (strlen($p) > 255 || !preg_match('/^[a-zA-Z0-9._-]+$/', $p)) {
+                return null;
+            }
+        }
+
+        $root = realpath(base_path('storage'));
+        if ($root === false || !is_dir($root)) {
+            return null;
+        }
+
+        $full = $root . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
+        if (!is_file($full)) {
+            return null;
+        }
+
+        $resolved = realpath($full);
+        if ($resolved === false || !str_starts_with($resolved, $root)) {
+            return null;
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * 是否适合在浏览器中直接打开（非下载）。排除可在页面中执行脚本的类型以降低同源风险。
+     */
+    private function isBrowserInlineMime(string $mime): bool
+    {
+        $mime = strtolower($mime);
+
+        if (str_starts_with($mime, 'image/')) {
+            return $mime !== 'image/svg+xml';
+        }
+        if (str_starts_with($mime, 'video/') || str_starts_with($mime, 'audio/')) {
+            return true;
+        }
+
+        return in_array($mime, [
+            'application/pdf',
+            'text/plain',
+            'text/csv',
+            'text/markdown',
+        ], true);
     }
 }
