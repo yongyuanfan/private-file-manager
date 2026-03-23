@@ -1,0 +1,239 @@
+/* 用户中心：复用 home-upload.css 的变量与主题 */
+
+.page--user-center {
+  padding-bottom: 48px;
+}
+
+.uc-breadcrumb {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.uc-breadcrumb__link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.uc-breadcrumb__link:hover {
+  text-decoration: underline;
+}
+
+.uc-breadcrumb__sep {
+  margin: 0 0.35em;
+  opacity: 0.6;
+}
+
+.uc-breadcrumb__here {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.uc-lead {
+  max-width: 40rem;
+}
+
+.user-strip--spaced {
+  margin-top: 14px;
+}
+
+.uc-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.uc-card {
+  padding: 22px 22px 20px;
+}
+
+.uc-section-title {
+  margin: 0 0 16px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.uc-dl {
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+
+.uc-dl__row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 7rem) 1fr;
+  gap: 12px 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.uc-dl__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.uc-dl__row:first-child {
+  padding-top: 0;
+}
+
+.uc-dl dt {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.uc-dl dd {
+  margin: 0;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.uc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .uc-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.uc-stat {
+  margin: 0;
+  padding: 14px 14px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--file-row-bg);
+}
+
+.uc-stat__value {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.uc-stat__label {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.uc-stat__sub {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.uc-empty {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.uc-empty a {
+  color: var(--accent);
+}
+
+.uc-table-scroll {
+  overflow-x: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.uc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.uc-table th,
+.uc-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.uc-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--file-row-bg);
+}
+
+.uc-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.uc-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.uc-table__narrow {
+  white-space: nowrap;
+}
+
+.uc-table__time {
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.uc-table__action {
+  white-space: nowrap;
+}
+
+.uc-table__ellipsis {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 720px) {
+  .uc-table--recent .uc-table__ellipsis {
+    max-width: 14rem;
+  }
+}
+
+.uc-table__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.uc-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8em;
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  background: var(--file-row-bg);
+  border: 1px solid var(--border);
+}
+
+.uc-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.uc-link:hover {
+  text-decoration: underline;
+}

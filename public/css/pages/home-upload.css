@@ -162,6 +162,13 @@ body {
   font-weight: 600;
 }
 
+.user-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .user-strip__logout {
   margin: 0;
 }

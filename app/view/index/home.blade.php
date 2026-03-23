@@ -23,13 +23,16 @@
         <div class="page-header__main">
             <h1>文件上传</h1>
             <p class="lead">点击或拖拽文件到下方区域加入列表，确认后点击「开始上传」。支持多选与批量上传，每个文件单独显示进度。</p>
-            <p class="user-strip">
+            <div class="user-strip" role="group" aria-label="当前用户">
                 <span class="user-strip__name">{{ $userDisplay }}</span>
                 <span class="user-strip__plan">{{ $limits['plan_name'] }} · 本周期已上传 {{ $limits['used_uploads'] }}@if($limits['max_uploads'] !== null) / {{ $limits['max_uploads'] }}@else （不限）@endif</span>
-                <form class="user-strip__logout" method="post" action="/logout">
-                    <button type="submit" class="btn btn-ghost btn-sm">退出</button>
-                </form>
-            </p>
+                <div class="user-strip__actions">
+                    <a href="/user" class="btn btn-ghost btn-sm">用户中心</a>
+                    <form class="user-strip__logout" method="post" action="/logout">
+                        <button type="submit" class="btn btn-ghost btn-sm">退出</button>
+                    </form>
+                </div>
+            </div>
         </div>
         <div class="theme-switcher" role="group" aria-label="颜色主题">
             <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
