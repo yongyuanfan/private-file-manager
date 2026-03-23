@@ -2,41 +2,61 @@
 
 namespace app\controller;
 
+use support\annotation\route\Route;
 use support\Request;
+use support\Response;
+use function json;
+use function runtime_path;
+use function view;
 
+/**
+ * 默认控制器
+ */
 class IndexController
 {
-    public function index(Request $request)
+    /**
+     * 上传页面
+     * @param Request $request
+     * @return Response
+     */
+    #[Route('/home', 'GET')]
+    public function home(Request $request): Response
     {
-        return <<<EOF
-<style>
-  * {
-    padding: 0;
-    margin: 0;
-  }
-  iframe {
-    border: none;
-    overflow: scroll;
-  }
-</style>
-<iframe
-  src="https://www.workerman.net/wellcome"
-  width="100%"
-  height="100%"
-  allow="clipboard-write"
-  sandbox="allow-scripts allow-same-origin allow-popups allow-downloads"
-></iframe>
-EOF;
+        return view('index/home', ['uploadUrl' => '/upload']);
     }
 
-    public function view(Request $request)
+    /**
+     * 上传文件
+     * @param Request $request
+     * @return Response
+     */
+    #[Route('/upload', 'POST')]
+    public function upload(Request $request): Response
     {
-        return view('index/view', ['name' => 'webman']);
-    }
+        $file = $request->file('file');
+        if ($file === null) {
+            return json(['code' => 1, 'msg' => '未收到文件']);
+        }
+        if (!$file->isValid()) {
+            return json(['code' => 2, 'msg' => '文件无效或未完整上传']);
+        }
+        $dir = runtime_path('uploads');
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return json(['code' => 3, 'msg' => '无法创建上传目录']);
+        }
+        $base = pathinfo($file->getUploadName(), PATHINFO_FILENAME);
+        $base = $base === '' ? 'file' : $base;
+        $base = preg_replace('/[^\p{L}\p{N}._-]+/u', '_', $base);
+        $ext = pathinfo($file->getUploadName(), PATHINFO_EXTENSION);
+        $ext = $ext !== '' ? '.' . preg_replace('/[^a-zA-Z0-9]/', '', $ext) : '';
+        $destName = $base . '_' . bin2hex(random_bytes(4)) . $ext;
+        $dest = $dir . DIRECTORY_SEPARATOR . $destName;
+        try {
+            $file->move($dest);
+        } catch (\Throwable) {
+            return json(['code' => 4, 'msg' => '保存文件失败']);
+        }
 
-    public function json(Request $request)
-    {
-        return json(['code' => 0, 'msg' => 'ok']);
+        return json(['code' => 0, 'msg' => 'ok', 'data' => ['saved_as' => $destName]]);
     }
-
 }
