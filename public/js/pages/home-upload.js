@@ -1,8 +1,39 @@
 (function ($) {
   'use strict';
 
-  /** 单文件大小上限（与页面提示一致） */
-  var MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+  /** 无服务端单文件上限时的客户端软限制（避免一次性加入超大文件） */
+  var DEFAULT_MAX_BYTES = 100 * 1024 * 1024 * 1024;
+
+  function parseLimits($zone) {
+    var raw = $zone.attr('data-limits');
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function buildLimitHint(limits) {
+    var parts = [];
+    var maxSz = limits.max_file_size;
+    if (maxSz != null && maxSz > 0) {
+      parts.push('单文件不超过 ' + formatSize(maxSz));
+    } else {
+      parts.push('单文件大小以服务端校验为准（当前会员无明确上限）');
+    }
+    if (limits.allowed_extensions && limits.allowed_extensions.length) {
+      parts.push('允许类型：.' + limits.allowed_extensions.join('、.'));
+    } else {
+      parts.push('允许类型：不限制（以服务端为准）');
+    }
+    var used = limits.used_uploads != null ? limits.used_uploads : 0;
+    var maxN = limits.max_uploads;
+    if (maxN != null) {
+      parts.push('本周期还可上传约 ' + Math.max(0, maxN - used) + ' 个（已用 ' + used + '/' + maxN + '）');
+    }
+    return parts.join('；') + '。超过限制的文件会在列表中标注，上传时将跳过或失败。';
+  }
 
   function formatSize(bytes) {
     if (bytes === 0) return '0 B';
@@ -52,6 +83,40 @@
     var $btnClear = $('#btn-clear');
     var $subdir = $('#upload-subdir');
     var $toast = $('#toast');
+    var $limitHint = $('#file-list-limit-hint');
+
+    var limits = parseLimits($zone);
+    var MAX_UPLOAD_BYTES =
+      limits.max_file_size != null && limits.max_file_size > 0
+        ? limits.max_file_size
+        : DEFAULT_MAX_BYTES;
+    if ($limitHint.length) {
+      $limitHint.text(buildLimitHint(limits));
+    }
+
+    var allowedExtSet = null;
+    if (limits.allowed_extensions && limits.allowed_extensions.length) {
+      allowedExtSet = {};
+      limits.allowed_extensions.forEach(function (e) {
+        allowedExtSet[String(e).toLowerCase()] = true;
+      });
+    }
+
+    function fileExtNoDot(name) {
+      var i = name.lastIndexOf('.');
+      if (i < 0 || i === name.length - 1) return '';
+      return name
+        .slice(i + 1)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    function isTypeBlocked(name) {
+      if (!allowedExtSet) return false;
+      var ext = fileExtNoDot(name);
+      if (!ext) return true;
+      return !allowedExtSet[ext];
+    }
 
     var uploadUrl = $zone.data('upload-url') || '/upload';
     var queue = [];
@@ -79,7 +144,7 @@
       $list.empty();
       queue.forEach(function (item) {
         var $row = $('<li class="file-item" data-id="' + item.id + '"/>');
-        if (item.oversize) {
+        if (item.oversize || item.typeBlocked) {
           $row.addClass('file-item--oversize');
         }
         var $meta = $('<div class="meta"/>');
@@ -98,11 +163,20 @@
         $row.append($meta, $remove);
         if (item.oversize) {
           $row.append(
-            $('<div class="file-item-hint"/>').text('超过 10MB 的文件无法上传，点击「开始上传」时将自动跳过。')
+            $('<div class="file-item-hint"/>').text('超过当前会员单文件大小上限，点击「开始上传」时将自动跳过。')
+          );
+        } else if (item.typeBlocked) {
+          $row.append(
+            $('<div class="file-item-hint"/>').text('该扩展名不在当前会员允许列表内，将自动跳过。')
           );
         }
         $row.append('<div class="progress-wrap"><div class="progress-bar"/></div>');
-        $row.append($('<div class="status"/>').text(item.status || (item.oversize ? '超过 10MB，将跳过上传' : '等待上传')));
+        $row.append(
+          $('<div class="status"/>').text(
+            item.status ||
+              (item.typeBlocked ? '类型不允许，将跳过上传' : item.oversize ? '超过大小上限，将跳过上传' : '等待上传')
+          )
+        );
         if (item.progress != null) {
           $row.find('.progress-bar').css('width', Math.round(item.progress * 100) + '%');
         }
@@ -126,13 +200,19 @@
         if (seen[key]) continue;
         seen[key] = true;
         var tooBig = f.size > MAX_UPLOAD_BYTES;
+        var typeBlocked = isTypeBlocked(f.name);
         queue.push({
           id: 'f-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
           file: f,
           progress: 0,
           oversize: tooBig,
+          typeBlocked: typeBlocked,
           skipped: false,
-          status: tooBig ? '超过 10MB，将跳过上传' : '等待上传',
+          status: typeBlocked
+            ? '当前会员不允许此扩展名，将跳过上传'
+            : tooBig
+              ? '超过单文件大小上限，将跳过上传'
+              : '等待上传',
         });
         added++;
       }
@@ -199,11 +279,11 @@
           if (anyErr) {
             showToast('部分文件上传失败', true);
           } else if (anyOk && anySkip) {
-            showToast('上传完成，已超过 10MB 的项已跳过');
+            showToast('上传完成，部分项因类型或大小已跳过');
           } else if (anyOk) {
             showToast('全部上传完成');
           } else if (anySkip) {
-            showToast('没有可上传的文件（均超过 10MB 已跳过）');
+            showToast('没有可上传的文件（均已跳过）');
           }
           return;
         }
@@ -212,12 +292,12 @@
           i++;
           return next();
         }
-        if (item.oversize || item.file.size > MAX_UPLOAD_BYTES) {
+        if (item.typeBlocked || item.oversize || item.file.size > MAX_UPLOAD_BYTES) {
           item.skipped = true;
           item.done = true;
           item.error = false;
           item.progress = 0;
-          item.status = '已跳过（超过 10MB）';
+          item.status = item.typeBlocked ? '已跳过（类型不允许）' : '已跳过（超过大小上限）';
           i++;
           renderList();
           return next();
@@ -248,7 +328,12 @@
           .fail(function (xhr) {
             item.error = true;
             item.done = true;
-            item.status = xhr.responseJSON && xhr.responseJSON.msg ? xhr.responseJSON.msg : '网络或服务器错误';
+            if (xhr.status === 401) {
+              item.status = '未登录或会话已过期，请刷新页面重新登录';
+            } else {
+              item.status =
+                xhr.responseJSON && xhr.responseJSON.msg ? xhr.responseJSON.msg : '网络或服务器错误';
+            }
           })
           .always(function () {
             i++;

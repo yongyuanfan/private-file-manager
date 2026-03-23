@@ -2,6 +2,11 @@
 
 namespace app\controller;
 
+use app\middleware\RequireLogin;
+use app\model\UserUpload;
+use app\service\UploadPolicyService;
+use Carbon\Carbon;
+use support\annotation\Middleware;
 use support\annotation\route\Route;
 use support\Request;
 use support\Response;
@@ -16,6 +21,7 @@ use function redirect;
 /**
  * 默认控制器
  */
+#[Middleware(RequireLogin::class)]
 class IndexController
 {
     /**
@@ -34,7 +40,16 @@ class IndexController
     #[Route('/home', 'GET')]
     public function home(Request $request): Response
     {
-        return view('index/home', ['uploadUrl' => '/upload']);
+        $policy = new UploadPolicyService();
+        $limits = $policy->limitsPayload($request->authUser);
+        $u = $request->authUser;
+        $display = ($u->display_name !== null && $u->display_name !== '') ? $u->display_name : $u->email;
+
+        return view('index/home', [
+            'uploadUrl' => '/upload',
+            'limits' => $limits,
+            'userDisplay' => $display,
+        ]);
     }
 
     /**
@@ -59,14 +74,22 @@ class IndexController
             return json(['code' => 5, 'msg' => '子目录不合法，仅允许字母、数字、下划线、连字符，多级用 / 分隔']);
         }
 
+        $extRaw = pathinfo((string) $file->getUploadName(), PATHINFO_EXTENSION);
+        $extNoDot = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', $extRaw));
+        $ext = $extNoDot !== '' ? '.' . $extNoDot : '';
+
+        $policy = new UploadPolicyService();
+        $deny = $policy->assertCanUpload($request->authUser, (int) $file->getSize(), $extNoDot);
+        if ($deny !== null) {
+            return json(['code' => 6, 'msg' => $deny]);
+        }
+
         $root = base_path('storage');
         $dir = $subdir === '' ? $root : $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subdir);
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             return json(['code' => 3, 'msg' => '无法创建存储目录']);
         }
 
-        $ext = pathinfo($file->getUploadName(), PATHINFO_EXTENSION);
-        $ext = $ext !== '' ? '.' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $ext)) : '';
         $destName = $this->newUuidV4() . $ext;
         $dest = $dir . DIRECTORY_SEPARATOR . $destName;
 
@@ -77,6 +100,25 @@ class IndexController
         }
 
         $relative = $subdir === '' ? $destName : str_replace(DIRECTORY_SEPARATOR, '/', $subdir) . '/' . $destName;
+
+        $mimeTypes = new MimeTypes();
+        $mime = $mimeTypes->guessMimeType($dest) ?? null;
+
+        try {
+            UserUpload::query()->create([
+                'user_id' => $request->authUser->id,
+                'storage_path' => $relative,
+                'original_name' => $file->getUploadName(),
+                'extension' => $extNoDot,
+                'file_size' => (int) (@filesize($dest) ?: 0),
+                'mime_type' => $mime,
+                'created_at' => Carbon::now(),
+            ]);
+        } catch (Throwable) {
+            @unlink($dest);
+
+            return json(['code' => 7, 'msg' => '保存上传记录失败']);
+        }
 
         return json([
             'code' => 0,
@@ -96,6 +138,16 @@ class IndexController
     public function serveStorageFile(Request $request): Response
     {
         $relative = (string) $request->get('path', '');
+        $key = $this->normalizeStoragePathForKey($relative);
+        if ($key === null) {
+            return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+
+        $policy = new UploadPolicyService();
+        if (!$policy->userOwnsStoragePath($request->authUser, $key)) {
+            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
+        }
+
         $absolute = $this->resolveStorageFilePath($relative);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
@@ -134,6 +186,16 @@ class IndexController
         }
 
         $relative = (string) $request->get('path', '');
+        $key = $this->normalizeStoragePathForKey($relative);
+        if ($key === null) {
+            return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+
+        $policy = new UploadPolicyService();
+        if (!$policy->userOwnsStoragePath($request->authUser, $key)) {
+            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
+        }
+
         $absolute = $this->resolveStorageFilePath($relative);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
@@ -333,9 +395,9 @@ class IndexController
     }
 
     /**
-     * 将相对路径解析为 storage 下的绝对文件路径；非法或不存在则返回 null。
+     * 规范化 storage 相对路径（与库中 user_uploads.storage_path 一致）；非法返回 null。
      */
-    private function resolveStorageFilePath(string $raw): ?string
+    private function normalizeStoragePathForKey(string $raw): ?string
     {
         $raw = trim(str_replace('\\', '/', $raw), '/');
         if ($raw === '') {
@@ -350,6 +412,20 @@ class IndexController
                 return null;
             }
         }
+
+        return implode('/', $parts);
+    }
+
+    /**
+     * 将相对路径解析为 storage 下的绝对文件路径；非法或不存在则返回 null。
+     */
+    private function resolveStorageFilePath(string $raw): ?string
+    {
+        $partsStr = $this->normalizeStoragePathForKey($raw);
+        if ($partsStr === null) {
+            return null;
+        }
+        $parts = explode('/', $partsStr);
 
         $root = realpath(base_path('storage'));
         if ($root === false || !is_dir($root)) {

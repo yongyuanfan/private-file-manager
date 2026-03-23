@@ -14,11 +14,16 @@
 
 namespace support;
 
+use app\model\User;
+
 /**
  * Class Request
  * @package support
  */
 class Request extends \Webman\Http\Request
 {
-
+    /**
+     * 当前登录用户（由 LoadAuthUser 中间件填充）
+     */
+    public ?User $authUser = null;
 }

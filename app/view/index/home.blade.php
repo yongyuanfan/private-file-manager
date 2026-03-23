@@ -23,6 +23,13 @@
         <div class="page-header__main">
             <h1>文件上传</h1>
             <p class="lead">点击或拖拽文件到下方区域加入列表，确认后点击「开始上传」。支持多选与批量上传，每个文件单独显示进度。</p>
+            <p class="user-strip">
+                <span class="user-strip__name">{{ $userDisplay }}</span>
+                <span class="user-strip__plan">{{ $limits['plan_name'] }} · 本周期已上传 {{ $limits['used_uploads'] }}@if($limits['max_uploads'] !== null) / {{ $limits['max_uploads'] }}@else （不限）@endif</span>
+                <form class="user-strip__logout" method="post" action="/logout">
+                    <button type="submit" class="btn btn-ghost btn-sm">退出</button>
+                </form>
+            </p>
         </div>
         <div class="theme-switcher" role="group" aria-label="颜色主题">
             <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
@@ -36,6 +43,7 @@
             id="upload-zone"
             class="upload-zone"
             data-upload-url="{{ $uploadUrl }}"
+            data-limits="{{ json_encode($limits, JSON_HEX_TAG | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }}"
             role="button"
             tabindex="0"
             aria-label="选择或拖入文件"
@@ -64,7 +72,7 @@
 
         <div class="file-list-section">
             <h2>待上传列表</h2>
-            <p class="file-list-limit-hint">单文件大小不超过 10MB；超过限制的文件会在列表中标注，点击「开始上传」时将不会上传。</p>
+            <p class="file-list-limit-hint" id="file-list-limit-hint">正在加载上传限制说明…</p>
             <p id="file-list-empty" class="empty-hint">暂无文件，请先选择或拖入文件</p>
             <ul id="file-list" class="file-list"></ul>
         </div>
