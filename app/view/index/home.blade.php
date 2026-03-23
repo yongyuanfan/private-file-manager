@@ -4,12 +4,32 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>批量上传</title>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('home-upload-theme');
+                if (t !== 'light' && t !== 'dark' && t !== 'system') t = 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="/css/pages/home-upload.css">
 </head>
 <body>
 <div class="page">
-    <h1>文件上传</h1>
-    <p class="lead">点击或拖拽文件到下方区域加入列表，确认后点击「开始上传」。支持多选与批量上传，每个文件单独显示进度。</p>
+    <header class="page-header">
+        <div class="page-header__main">
+            <h1>文件上传</h1>
+            <p class="lead">点击或拖拽文件到下方区域加入列表，确认后点击「开始上传」。支持多选与批量上传，每个文件单独显示进度。</p>
+        </div>
+        <div class="theme-switcher" role="group" aria-label="颜色主题">
+            <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
+            <button type="button" data-theme-value="dark" aria-pressed="false">深色</button>
+            <button type="button" data-theme-value="system" aria-pressed="false">跟随系统</button>
+        </div>
+    </header>
 
     <div class="card">
         <div
@@ -47,6 +67,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script src="/js/vendor/jquery.min.js"></script>
+<script src="/js/pages/home-theme.js"></script>
 <script src="/js/pages/home-upload.js"></script>
 </body>
 </html>
