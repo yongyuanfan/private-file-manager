@@ -14,13 +14,16 @@
         .auth-field label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--muted); }
         .auth-field input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-size: 1rem; }
         .auth-error { background: var(--toast-error-border); color: var(--danger); padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 16px; }
+        .auth-remember { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; font-size: 0.9rem; color: var(--muted); user-select: none; }
+        .auth-remember input { width: auto; accent-color: var(--accent); }
+        .auth-remember label { cursor: pointer; margin: 0; color: var(--text); }
         .auth-actions { display: flex; gap: 12px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
         .auth-actions .btn-primary { flex: 1; min-width: 120px; }
         .auth-actions a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
         .auth-actions a:hover { text-decoration: underline; }
     </style>
 </head>
-<body>
+<body @if(($error ?? '') !== '') data-login-error="1" @endif>
 <div class="auth-page">
     <div class="auth-card">
         <h1>登录</h1>
@@ -38,6 +41,10 @@
                 <label for="password">密码</label>
                 <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
+            <div class="auth-remember">
+                <input type="checkbox" id="remember" value="1" checked>
+                <label for="remember">记住登录密码</label>
+            </div>
             <div class="auth-actions">
                 <button type="submit" class="btn btn-primary">登录</button>
                 @if($registration_open ?? true)
@@ -47,5 +54,42 @@
         </form>
     </div>
 </div>
+<script>
+(function () {
+    var KEY = 'xinkin_oss_login_remember';
+    var form = document.querySelector('form[action="/login"]');
+    var email = document.getElementById('email');
+    var password = document.getElementById('password');
+    var remember = document.getElementById('remember');
+    if (!form || !email || !password || !remember) return;
+
+    if (document.body.getAttribute('data-login-error') === '1') {
+        try { localStorage.removeItem(KEY); } catch (e) {}
+    } else {
+        try {
+            var raw = localStorage.getItem(KEY);
+            if (raw) {
+                var d = JSON.parse(raw);
+                if (d && typeof d.email === 'string') email.value = d.email;
+                if (d && typeof d.password === 'string') password.value = d.password;
+                remember.checked = true;
+            }
+        } catch (e) {}
+    }
+
+    form.addEventListener('submit', function () {
+        try {
+            if (remember.checked) {
+                localStorage.setItem(KEY, JSON.stringify({
+                    email: email.value.trim(),
+                    password: password.value
+                }));
+            } else {
+                localStorage.removeItem(KEY);
+            }
+        } catch (e) {}
+    });
+})();
+</script>
 </body>
 </html>
