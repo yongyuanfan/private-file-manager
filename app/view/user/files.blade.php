@@ -57,7 +57,7 @@
                 </div>
 
                 <nav class="fm-path" aria-label="当前路径">
-                    <a href="/user/files" class="fm-path__root {{ $relDir === '' ? 'is-here' : '' }}">根目录</a>
+                    <a href="/user/files" class="fm-path__root {{ $relDir === '' ? 'is-here' : '' }}">我的目录</a>
                     @foreach($breadcrumbs as $i => $crumb)
                         <span class="fm-path__sep" aria-hidden="true">/</span>
                         @if($i === count($breadcrumbs) - 1)
