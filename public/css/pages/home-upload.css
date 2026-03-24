@@ -405,6 +405,26 @@ body {
   cursor: not-allowed;
 }
 
+.field-input.is-invalid {
+  border-color: var(--danger);
+}
+
+.field-input.is-invalid:focus {
+  border-color: var(--danger);
+}
+
+.field-error {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--danger);
+  max-width: 36rem;
+}
+
+.field-error[hidden] {
+  display: none;
+}
+
 .field-hint {
   margin: 8px 0 0;
   font-size: 0.75rem;

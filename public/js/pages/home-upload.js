@@ -60,6 +60,44 @@
     return file.name + '|' + file.size + '|' + file.lastModified;
   }
 
+  /**
+   * 与后端 IndexController::sanitizeStorageSubdir 规则一致；留空为合法。
+   * @returns {{ ok: boolean, msg?: string }}
+   */
+  function validateStorageSubdir(raw) {
+    var s = String(raw == null ? '' : raw)
+      .trim()
+      .replace(/\\/g, '/');
+    s = s.replace(/^\/+|\/+$/g, '');
+    if (s === '') {
+      return { ok: true };
+    }
+    var parts = s.split('/').filter(function (p) {
+      return p !== '' && p !== '.' && p !== '..';
+    });
+    if (parts.length === 0) {
+      return { ok: false, msg: '路径不合法：不能使用空段、`.` 或 `..` 等。' };
+    }
+    if (parts.length > 8) {
+      return { ok: false, msg: '子目录最多 8 级，请缩短路径。' };
+    }
+    var segRe = /^[a-zA-Z0-9](?:[a-zA-Z0-9_-]*[a-zA-Z0-9])?$/;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p.length > 64) {
+        return { ok: false, msg: '每一级名称不能超过 64 个字符。' };
+      }
+      if (!segRe.test(p)) {
+        return {
+          ok: false,
+          msg:
+            '每一级须以字母或数字开头、以字母或数字结尾；中间可为字母、数字、下划线（_）与连字符（-）。多级请用 / 分隔。',
+        };
+      }
+    }
+    return { ok: true };
+  }
+
   function uploadOne(url, file, subdir, onProgress) {
     var formData = new FormData();
     formData.append('file', file);
@@ -95,6 +133,7 @@
     var $btnUpload = $('#btn-upload');
     var $btnClear = $('#btn-clear');
     var $subdir = $('#upload-subdir');
+    var $subdirError = $('#upload-subdir-error');
     var $toast = $('#toast');
     var $limitHint = $('#file-list-limit-hint');
 
@@ -144,8 +183,25 @@
       );
     }
 
+    function subdirInputValid() {
+      return validateStorageSubdir($subdir.val()).ok;
+    }
+
+    function applySubdirValidationUI() {
+      var r = validateStorageSubdir($subdir.val());
+      if (r.ok) {
+        $subdir.removeClass('is-invalid').attr('aria-invalid', 'false');
+        $subdirError.prop('hidden', true).text('');
+      } else {
+        $subdir.addClass('is-invalid').attr('aria-invalid', 'true');
+        $subdirError.prop('hidden', false).text(r.msg || '子目录格式不正确。');
+      }
+      return r.ok;
+    }
+
     function syncQueue() {
-      $btnUpload.prop('disabled', queue.length === 0 || uploading);
+      var subdirBad = !subdirInputValid();
+      $btnUpload.prop('disabled', queue.length === 0 || uploading || subdirBad);
       $btnClear.prop('disabled', queue.length === 0 || uploading);
       $subdir.prop('disabled', uploading);
       $empty.toggle(queue.length === 0);
@@ -260,6 +316,11 @@
       }
     });
 
+    $subdir.on('input', function () {
+      applySubdirValidationUI();
+      syncQueue();
+    });
+
     $btnClear.on('click', function () {
       if (uploading) return;
       queue = [];
@@ -267,7 +328,7 @@
     });
 
     $btnUpload.on('click', function () {
-      if (!queue.length || uploading) return;
+      if (!applySubdirValidationUI() || !queue.length || uploading) return;
       uploading = true;
       syncQueue();
       renderList();
@@ -354,6 +415,7 @@
       next();
     });
 
+    applySubdirValidationUI();
     syncQueue();
   });
 })(jQuery);

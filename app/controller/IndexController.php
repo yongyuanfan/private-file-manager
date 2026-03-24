@@ -71,7 +71,7 @@ class IndexController
 
         $subdir = $this->sanitizeStorageSubdir((string) $request->post('subdir', ''));
         if ($subdir === null) {
-            return json(['code' => 5, 'msg' => '子目录不合法，仅允许字母、数字、下划线、连字符，多级用 / 分隔']);
+            return json(['code' => 5, 'msg' => '子目录不合法：每一级须以字母或数字开头、结尾，中间可为字母、数字、下划线、连字符，多级用 / 分隔']);
         }
         if ($subdir === '') {
             $subdir = Carbon::now()->format('Ymd');
@@ -416,7 +416,7 @@ class IndexController
 
     /**
      * 校验并规范化 storage 下的相对子目录，禁止路径穿越。
-     * 规范化后的相对路径（使用 /），空字符串表示未填写（上传时会替换为当日 Ymd）；非法时返回 null。
+     * 每段须以字母或数字开头、结尾，中间可为 [a-zA-Z0-9_-]；规范化后的相对路径（使用 /），空字符串表示未填写（上传时会替换为当日 Ymd）；非法时返回 null。
      * @return string|null
      */
     private function sanitizeStorageSubdir(string $raw): ?string
@@ -430,7 +430,7 @@ class IndexController
             return null;
         }
         foreach ($parts as $p) {
-            if (strlen($p) > 64 || !preg_match('/^[a-zA-Z0-9_-]+$/', $p)) {
+            if (strlen($p) > 64 || !preg_match('/^[a-zA-Z0-9](?:[a-zA-Z0-9_-]*[a-zA-Z0-9])?$/', $p)) {
                 return null;
             }
         }
