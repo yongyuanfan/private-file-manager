@@ -374,6 +374,12 @@ button.site-header__dropdown-item:hover {
   box-shadow: var(--switcher-active-shadow);
 }
 
+@media (max-width: 639px) {
+  .theme-switcher {
+    display: none;
+  }
+}
+
 .page h1 {
   font-size: 1.75rem;
   font-weight: 600;
