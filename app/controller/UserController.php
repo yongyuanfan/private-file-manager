@@ -5,6 +5,7 @@ namespace app\controller;
 use app\middleware\RequireLogin;
 use app\model\UserUpload;
 use app\service\UploadPolicyService;
+use app\support\HumanBytes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use support\annotation\Middleware;
@@ -50,7 +51,7 @@ class UserController
                 'label' => $label,
                 'count' => (int) $row->cnt,
                 'bytes' => (int) $row->bytes,
-                'bytes_label' => $this->formatBytes((int) $row->bytes),
+                'bytes_label' => HumanBytes::format((int) $row->bytes),
             ];
         }
 
@@ -70,7 +71,7 @@ class UserController
                 /** 列表展示用：相对账号目录，不含邮箱派生的一级目录名 */
                 'path_display' => $policy->pathParamForFileUrl($user, $path),
                 'extension' => (string) $row->extension,
-                'size_label' => $this->formatBytes((int) ($row->file_size ?? 0)),
+                'size_label' => HumanBytes::format((int) ($row->file_size ?? 0)),
                 'created_label' => $row->created_at !== null
                     ? $row->created_at->format('Y-m-d H:i')
                     : '—',
@@ -92,28 +93,14 @@ class UserController
             'stats' => [
                 'total_count' => $totalCount,
                 'total_bytes' => $totalBytes,
-                'total_bytes_label' => $this->formatBytes($totalBytes),
+                'total_bytes_label' => HumanBytes::format($totalBytes),
                 'month_count' => $monthCount,
                 'month_bytes' => $monthBytes,
-                'month_bytes_label' => $this->formatBytes($monthBytes),
+                'month_bytes_label' => HumanBytes::format($monthBytes),
                 'today_count' => $todayCount,
             ],
             'byExtension' => $byExtension,
             'recent' => $recent,
         ]);
-    }
-
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes <= 0) {
-            return '0 B';
-        }
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $exp = (int) floor(log($bytes, 1024));
-        $exp = min($exp, count($units) - 1);
-        $value = $bytes / (1024 ** $exp);
-
-        return (abs($value - round($value)) < 0.001 ? (string) (int) $value : number_format($value, 2, '.', ''))
-            . ' ' . $units[$exp];
     }
 }

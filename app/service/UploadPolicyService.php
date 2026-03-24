@@ -137,6 +137,29 @@ class UploadPolicyService
     }
 
     /**
+     * 校验并规范化「账号目录下」的相对路径（上传子目录、文件浏览 path 参数共用）。
+     * 空字符串表示根或未填写；非法（路径穿越、段格式不符、层级过深）返回 null。
+     */
+    public function sanitizeRelativeSubdir(string $raw): ?string
+    {
+        $raw = trim(str_replace('\\', '/', $raw), '/');
+        if ($raw === '') {
+            return '';
+        }
+        $parts = array_values(array_filter(explode('/', $raw), static fn ($p) => $p !== '' && $p !== '.' && $p !== '..'));
+        if ($parts === [] || count($parts) > 8) {
+            return null;
+        }
+        foreach ($parts as $p) {
+            if (strlen($p) > 64 || !preg_match('/^[a-zA-Z0-9](?:[a-zA-Z0-9_-]*[a-zA-Z0-9])?$/', $p)) {
+                return null;
+            }
+        }
+
+        return implode('/', $parts);
+    }
+
+    /**
      * storage 根下以邮箱派生的一级目录名（字符集与 IndexController::normalizeStoragePathForKey 分段规则一致）。
      */
     public function userStorageDirSegment(User $user): string

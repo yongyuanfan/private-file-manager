@@ -61,7 +61,7 @@
   }
 
   /**
-   * 与后端 IndexController::sanitizeStorageSubdir 规则一致；留空为合法。
+   * 与后端 UploadPolicyService::sanitizeRelativeSubdir 规则一致；留空为合法。
    * @returns {{ ok: boolean, msg?: string }}
    */
   function validateStorageSubdir(raw) {

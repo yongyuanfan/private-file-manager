@@ -19,6 +19,13 @@
                             <button type="submit" class="btn btn-ghost btn-sm">退出</button>
                         </form>
                     @elseif(($headerNav ?? '') === 'user_center')
+                        <a href="/user/files" class="btn btn-ghost btn-sm">文件管理</a>
+                        <a href="/home" class="btn btn-ghost btn-sm">返回上传</a>
+                        <form class="site-header__logout-form" method="post" action="/logout">
+                            <button type="submit" class="btn btn-ghost btn-sm">退出</button>
+                        </form>
+                    @elseif(($headerNav ?? '') === 'user_files')
+                        <a href="/user" class="btn btn-ghost btn-sm">用户中心</a>
                         <a href="/home" class="btn btn-ghost btn-sm">返回上传</a>
                         <form class="site-header__logout-form" method="post" action="/logout">
                             <button type="submit" class="btn btn-ghost btn-sm">退出</button>
