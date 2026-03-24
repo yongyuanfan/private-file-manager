@@ -66,7 +66,7 @@
                 <article class="uc-stat" role="listitem">
                     <p class="uc-stat__value">{{ $stats['month_count'] }}</p>
                     <p class="uc-stat__label">本月上传数</p>
-                    <p class="uc-stat__sub">{{ $stats['month_bytes_label'] }}（本月体积）</p>
+                    <p class="uc-stat__sub">共{{ $stats['month_bytes_label'] }}</p>
                 </article>
                 <article class="uc-stat" role="listitem">
                     <p class="uc-stat__value">{{ $stats['today_count'] }}</p>
