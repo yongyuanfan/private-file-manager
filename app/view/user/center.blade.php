@@ -114,21 +114,17 @@
                         <tr>
                             <th scope="col">文件名</th>
                             <th scope="col">存储路径</th>
-                            <th scope="col" class="uc-table__narrow">扩展名</th>
                             <th scope="col" class="uc-table__num">大小</th>
                             <th scope="col" class="uc-table__time">上传时间</th>
-                            <th scope="col" class="uc-table__action">操作</th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach($recent as $item)
                             <tr>
-                                <td class="uc-table__ellipsis" title="{{ $item['name'] }}">{{ $item['name'] }}</td>
-                                <td class="uc-table__mono uc-table__ellipsis" title="{{ $item['path'] }}">{{ $item['path'] }}</td>
-                                <td class="uc-table__narrow"><code class="uc-code">{{ $item['extension'] !== '' ? '.' . $item['extension'] : '—' }}</code></td>
+                                <td class="uc-table__ellipsis" title="{{ $item['name'] }}"><a href="{{ $item['file_url'] }}" class="uc-link" target="_blank" rel="noopener noreferrer">{{ $item['name'] }}</a></td>
+                                <td class="uc-table__mono uc-table__ellipsis" title="{{ $item['path_display'] }}">{{ $item['path_display'] }}</td>
                                 <td class="uc-table__num">{{ $item['size_label'] }}</td>
                                 <td class="uc-table__time">{{ $item['created_label'] }}</td>
-                                <td class="uc-table__action"><a href="{{ $item['file_url'] }}" class="uc-link" target="_blank" rel="noopener noreferrer">打开</a></td>
                             </tr>
                         @endforeach
                         </tbody>

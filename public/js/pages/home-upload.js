@@ -247,7 +247,7 @@
         );
         if (item.viewUrl) {
           $statusRow.append(
-            $('<a class="file-item-open" target="_blank" rel="noopener noreferrer">打开</a>').attr(
+            $('<a class="file-item-open" target="_blank" rel="noopener noreferrer">打开文件</a>').attr(
               'href',
               item.viewUrl
             )

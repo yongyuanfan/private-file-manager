@@ -67,7 +67,8 @@ class UserController
                 'name' => $row->original_name !== null && $row->original_name !== ''
                     ? (string) $row->original_name
                     : basename($path),
-                'path' => $path,
+                /** 列表展示用：相对账号目录，不含邮箱派生的一级目录名 */
+                'path_display' => $policy->pathParamForFileUrl($user, $path),
                 'extension' => (string) $row->extension,
                 'size_label' => $this->formatBytes((int) ($row->file_size ?? 0)),
                 'created_label' => $row->created_at !== null

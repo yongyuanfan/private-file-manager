@@ -185,17 +185,9 @@
   white-space: nowrap;
 }
 
-.uc-table__narrow {
-  white-space: nowrap;
-}
-
 .uc-table__time {
   white-space: nowrap;
   color: var(--muted);
-}
-
-.uc-table__action {
-  white-space: nowrap;
 }
 
 .uc-table__ellipsis {
@@ -226,7 +218,7 @@
 
 .uc-link {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 400;
   text-decoration: none;
 }
 
