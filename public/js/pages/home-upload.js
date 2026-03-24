@@ -238,12 +238,22 @@
           );
         }
         $row.append('<div class="progress-wrap"><div class="progress-bar"/></div>');
-        $row.append(
+        var $statusRow = $('<div class="file-item-status-row"/>');
+        $statusRow.append(
           $('<div class="status"/>').text(
             item.status ||
               (item.typeBlocked ? '类型不允许，将跳过上传' : item.oversize ? '超过大小上限，将跳过上传' : '等待上传')
           )
         );
+        if (item.viewUrl) {
+          $statusRow.append(
+            $('<a class="file-item-open" target="_blank" rel="noopener noreferrer">打开</a>').attr(
+              'href',
+              item.viewUrl
+            )
+          );
+        }
+        $row.append($statusRow);
         if (item.progress != null) {
           $row.find('.progress-bar').css('width', Math.round(item.progress * 100) + '%');
         }
@@ -275,6 +285,7 @@
           oversize: tooBig,
           typeBlocked: typeBlocked,
           skipped: false,
+          viewUrl: null,
           status: typeBlocked
             ? '当前会员不允许此扩展名，将跳过上传'
             : tooBig
@@ -391,6 +402,10 @@
               item.error = false;
               item.skipped = false;
               item.status = '上传成功';
+              item.viewUrl =
+                res.data && typeof res.data.view_url === 'string' && res.data.view_url !== ''
+                  ? res.data.view_url
+                  : null;
             } else {
               item.error = true;
               item.done = true;

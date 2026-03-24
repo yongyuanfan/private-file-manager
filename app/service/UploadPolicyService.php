@@ -166,4 +166,26 @@ class UploadPolicyService
 
         return $storagePath;
     }
+
+    /**
+     * 是否与 {@see \app\controller\IndexController::serveStorageImage()} 支持的常见光栅图一致（按扩展名推断，用于生成打开链接）。
+     */
+    public function isRasterImageExtension(string $extensionWithoutDot): bool
+    {
+        $ext = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $extensionWithoutDot) ?? '');
+
+        return in_array($ext, ['jpg', 'jpeg', 'jpe', 'jfif', 'png', 'gif', 'webp', 'bmp'], true);
+    }
+
+    /**
+     * 浏览器打开已上传文件：图片走 /image，其余走 /file；path 查询参数规则同 {@see pathParamForFileUrl()}。
+     */
+    public function fileViewUrl(User $user, string $storagePath, string $extensionWithoutDot): string
+    {
+        $pathParam = $this->pathParamForFileUrl($user, $storagePath);
+        $q = http_build_query(['path' => $pathParam]);
+        $base = $this->isRasterImageExtension($extensionWithoutDot) ? '/image' : '/file';
+
+        return $base . '?' . $q;
+    }
 }

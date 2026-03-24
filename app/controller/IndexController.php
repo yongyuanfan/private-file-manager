@@ -132,6 +132,7 @@ class IndexController
             'data' => [
                 'saved_as' => $destName,
                 'relative_path' => $relative,
+                'view_url' => $policy->fileViewUrl($request->authUser, $relative, $extNoDot),
             ],
         ]);
     }

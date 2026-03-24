@@ -616,21 +616,42 @@ html[data-theme="dark"] .btn-primary {
   transition: width 0.12s ease-out;
 }
 
-.file-item .status {
+.file-item-status-row {
   grid-column: 1 / -1;
-  font-size: 0.75rem;
-  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.file-item.is-done .status {
+.file-item-status-row .status {
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.file-item-open {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.file-item-open:hover {
+  text-decoration: underline;
+}
+
+.file-item.is-done .file-item-status-row .status {
   color: var(--accent);
 }
 
-.file-item.is-error .status {
+.file-item.is-error .file-item-status-row .status {
   color: var(--danger);
 }
 
-.file-item.is-skipped .status {
+.file-item.is-skipped .file-item-status-row .status {
   color: var(--muted);
 }
 

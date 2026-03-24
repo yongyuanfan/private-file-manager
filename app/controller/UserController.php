@@ -63,7 +63,6 @@ class UserController
         $recent = [];
         foreach ($recentModels as $row) {
             $path = (string) $row->storage_path;
-            $pathForUrl = $policy->pathParamForFileUrl($user, $path);
             $recent[] = [
                 'name' => $row->original_name !== null && $row->original_name !== ''
                     ? (string) $row->original_name
@@ -74,7 +73,7 @@ class UserController
                 'created_label' => $row->created_at !== null
                     ? $row->created_at->format('Y-m-d H:i')
                     : '—',
-                'file_url' => '/file?' . http_build_query(['path' => $pathForUrl]),
+                'file_url' => $policy->fileViewUrl($user, $path, (string) $row->extension),
             ];
         }
 
