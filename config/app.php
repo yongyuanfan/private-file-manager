@@ -15,6 +15,8 @@
 use support\Request;
 
 return [
+    /** 前台页面顶部展示的网站名称 */
+    'site_name' => 'Xinkin OSS',
     'debug' => true,
     'error_reporting' => E_ALL,
     'default_timezone' => 'Asia/Shanghai',

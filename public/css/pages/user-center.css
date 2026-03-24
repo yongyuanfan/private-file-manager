@@ -33,10 +33,6 @@
   max-width: 40rem;
 }
 
-.user-strip--spaced {
-  margin-top: 14px;
-}
-
 .uc-layout {
   display: flex;
   flex-direction: column;

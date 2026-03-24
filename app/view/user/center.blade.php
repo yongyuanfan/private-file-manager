@@ -19,27 +19,17 @@
     <link rel="stylesheet" href="/css/pages/user-center.css">
 </head>
 <body>
-<div class="theme-switcher" role="group" aria-label="颜色主题">
-    <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
-    <button type="button" data-theme-value="dark" aria-pressed="false">深色</button>
-    <button type="button" data-theme-value="system" aria-pressed="false">跟随系统</button>
-</div>
+@include('partials.site-header', [
+    'userDisplay' => $userDisplay,
+    'headerUserMeta' => $planName,
+    'headerNav' => 'user_center',
+])
 <div class="page page--user-center">
     <header class="page-header">
         <div class="page-header__main">
             <p class="uc-breadcrumb"><a href="/home" class="uc-breadcrumb__link">文件上传</a><span class="uc-breadcrumb__sep" aria-hidden="true">/</span><span class="uc-breadcrumb__here">用户中心</span></p>
             <h1>用户中心</h1>
             <p class="lead uc-lead">查看账号信息与已上传文件的汇总统计；最近上传可从列表打开（需登录）。</p>
-            <div class="user-strip user-strip--spaced" role="group" aria-label="当前用户">
-                <span class="user-strip__name">{{ $userDisplay }}</span>
-                <span class="user-strip__plan">{{ $planName }}</span>
-                <div class="user-strip__actions">
-                    <a href="/home" class="btn btn-ghost btn-sm">返回上传</a>
-                    <form class="user-strip__logout" method="post" action="/logout">
-                        <button type="submit" class="btn btn-ghost btn-sm">退出</button>
-                    </form>
-                </div>
-            </div>
         </div>
     </header>
 
