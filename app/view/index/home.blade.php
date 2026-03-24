@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>批量上传</title>
+    <title>文件上传</title>
     <script>
         (function () {
             try {
