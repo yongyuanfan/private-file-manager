@@ -3,7 +3,6 @@
 namespace app\controller;
 
 use app\middleware\RequireLogin;
-use app\model\User;
 use app\model\UserUpload;
 use app\service\UploadPolicyService;
 use Carbon\Carbon;
@@ -88,7 +87,7 @@ class IndexController
             return json(['code' => 6, 'msg' => $deny]);
         }
 
-        $userSeg = $this->userStorageDirSegment($request->authUser);
+        $userSeg = $policy->userStorageDirSegment($request->authUser);
         $relativeDir = $userSeg . '/' . $subdir;
 
         $root = base_path('storage');
@@ -138,7 +137,7 @@ class IndexController
     }
 
     /**
-     * 访问 storage 内文件：GET path 为相对 storage 的路径；也可传相对当前用户邮箱目录下的路径（会自动加上该目录再校验归属）。
+     * 访问 storage 内文件：GET path 须为相对当前用户账号目录的路径（不得包含该目录名，避免泄露）；兼容旧数据中的完整相对路径（无账号目录前缀时）。
      */
     #[Route('/file', 'GET')]
     public function serveStorageFile(Request $request): Response
@@ -147,6 +146,9 @@ class IndexController
         $resolved = $this->resolveAuthorizedStorageKeyForRead($request, $relative);
         if ($resolved['error'] === 'empty' || $resolved['error'] === 'invalid') {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+        if ($resolved['error'] === 'path_forbidden') {
+            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '链接路径中不得包含账号目录名；请使用相对该目录的路径（用户中心「打开」链接已按此规则生成）。');
         }
         if ($resolved['error'] === 'forbidden') {
             return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
@@ -179,7 +181,7 @@ class IndexController
     }
 
     /**
-     * 访问 storage 内图片并可选缩放：GET path 为相对 storage 路径；w、h 为最大宽/高（像素），可只传其一，等比缩小不放大。
+     * 访问 storage 内图片并可选缩放：path 规则同 {@see serveStorageFile()}；w、h 为最大宽/高（像素），可只传其一，等比缩小不放大。
      * 不传 w、h 时返回原图。仅支持常见光栅格式（JPEG/PNG/GIF/WebP/BMP），不含 SVG。
      */
     #[Route('/image', 'GET')]
@@ -194,8 +196,11 @@ class IndexController
         if ($resolved['error'] === 'empty' || $resolved['error'] === 'invalid') {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
+        if ($resolved['error'] === 'path_forbidden') {
+            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
         if ($resolved['error'] === 'forbidden') {
-            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
+            return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
 
         $absolute = $this->resolveStorageFilePath($resolved['key']);
@@ -373,25 +378,9 @@ class IndexController
     }
 
     /**
-     * 将用户邮箱转为 storage 下的一级目录名（与 normalizeStoragePathForKey 分段规则兼容）。
-     */
-    private function userStorageDirSegment(User $user): string
-    {
-        $email = strtolower(trim((string) $user->email));
-        $seg = str_replace('@', '_at_', $email);
-        $seg = (string) preg_replace('/[^a-z0-9._-]+/i', '_', $seg);
-        $seg = trim($seg, '._-');
-        if ($seg === '' || strlen($seg) > 200) {
-            return 'user_' . $user->id;
-        }
-
-        return $seg;
-    }
-
-    /**
-     * 解析 GET path：先按完整相对路径匹配归属；否则在当前用户邮箱目录下解析（默认只查该用户目录树）。
+     * 解析 GET path：禁止 URL 中出现当前用户账号目录名（首段）；在库中先按 path 原样匹配（旧数据），再按「账号目录/path」匹配。
      *
-     * @return array{key: string|null, error: 'empty'|'invalid'|'forbidden'|null}
+     * @return array{key: string|null, error: 'empty'|'invalid'|'path_forbidden'|'forbidden'|null}
      */
     private function resolveAuthorizedStorageKeyForRead(Request $request, string $relativeRaw): array
     {
@@ -400,27 +389,26 @@ class IndexController
             return ['key' => null, 'error' => 'empty'];
         }
 
-        $userSeg = $this->userStorageDirSegment($request->authUser);
         $policy = new UploadPolicyService();
+        $userSeg = $policy->userStorageDirSegment($request->authUser);
 
-        $candidates = [];
         $k1 = $this->normalizeStoragePathForKey($relativeRaw);
-        if ($k1 !== null) {
-            $candidates[] = $k1;
-        }
-        $k2 = $this->normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
-        if ($k2 !== null && !in_array($k2, $candidates, true)) {
-            $candidates[] = $k2;
-        }
-
-        if ($candidates === []) {
+        if ($k1 === null) {
             return ['key' => null, 'error' => 'invalid'];
         }
 
-        foreach ($candidates as $k) {
-            if ($policy->userOwnsStoragePath($request->authUser, $k)) {
-                return ['key' => $k, 'error' => null];
-            }
+        $parts = explode('/', $k1);
+        if ($parts[0] === $userSeg) {
+            return ['key' => null, 'error' => 'path_forbidden'];
+        }
+
+        if ($policy->userOwnsStoragePath($request->authUser, $k1)) {
+            return ['key' => $k1, 'error' => null];
+        }
+
+        $k2 = $this->normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
+        if ($k2 !== null && $policy->userOwnsStoragePath($request->authUser, $k2)) {
+            return ['key' => $k2, 'error' => null];
         }
 
         return ['key' => null, 'error' => 'forbidden'];

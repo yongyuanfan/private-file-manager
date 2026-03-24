@@ -8,6 +8,7 @@ use app\model\User;
 use app\model\UserUpload;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use function str_starts_with;
 
 class UploadPolicyService
 {
@@ -133,5 +134,36 @@ class UploadPolicyService
             ->where('user_id', $user->id)
             ->where('storage_path', $relativePath)
             ->exists();
+    }
+
+    /**
+     * storage 根下以邮箱派生的一级目录名（字符集与 IndexController::normalizeStoragePathForKey 分段规则一致）。
+     */
+    public function userStorageDirSegment(User $user): string
+    {
+        $email = strtolower(trim((string) $user->email));
+        $seg = str_replace('@', '_at_', $email);
+        $seg = (string) preg_replace('/[^a-z0-9._-]+/i', '_', $seg);
+        $seg = trim($seg, '._-');
+        if ($seg === '' || strlen($seg) > 200) {
+            return 'user_' . $user->id;
+        }
+
+        return $seg;
+    }
+
+    /**
+     * 供 /file、/image 查询参数使用：去掉当前用户账号目录前缀，避免邮箱相关信息出现在 URL 中。
+     */
+    public function pathParamForFileUrl(User $user, string $storagePath): string
+    {
+        $storagePath = trim(str_replace('\\', '/', $storagePath), '/');
+        $seg = $this->userStorageDirSegment($user);
+        $prefix = $seg . '/';
+        if ($storagePath !== '' && str_starts_with($storagePath, $prefix)) {
+            return substr($storagePath, strlen($prefix));
+        }
+
+        return $storagePath;
     }
 }

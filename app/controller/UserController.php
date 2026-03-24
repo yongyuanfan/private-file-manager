@@ -4,6 +4,7 @@ namespace app\controller;
 
 use app\middleware\RequireLogin;
 use app\model\UserUpload;
+use app\service\UploadPolicyService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use support\annotation\Middleware;
@@ -58,9 +59,11 @@ class UserController
             ->limit(25)
             ->get();
 
+        $policy = new UploadPolicyService();
         $recent = [];
         foreach ($recentModels as $row) {
             $path = (string) $row->storage_path;
+            $pathForUrl = $policy->pathParamForFileUrl($user, $path);
             $recent[] = [
                 'name' => $row->original_name !== null && $row->original_name !== ''
                     ? (string) $row->original_name
@@ -71,7 +74,7 @@ class UserController
                 'created_label' => $row->created_at !== null
                     ? $row->created_at->format('Y-m-d H:i')
                     : '—',
-                'file_url' => '/file?' . http_build_query(['path' => $path]),
+                'file_url' => '/file?' . http_build_query(['path' => $pathForUrl]),
             ];
         }
 
