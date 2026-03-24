@@ -34,7 +34,7 @@
                 <span class="uc-breadcrumb__here">文件管理</span>
             </p>
             <h1>文件管理</h1>
-            <p class="lead uc-lead">按目录浏览已上传文件；点击文件夹进入下一级，文件名可打开预览或下载。</p>
+            <p class="lead uc-lead">按目录浏览已上传文件；点击文件夹进入下一级，文件名可打开预览或下载。可为文件创建限次、限时、可选密码的外链（<a href="/user/shares" class="uc-breadcrumb__link">分享管理</a>）。</p>
         </div>
     </header>
 
@@ -84,11 +84,16 @@
                     @endforeach
                     @foreach($files as $f)
                         <li class="fm-grid__cell">
-                            <a href="{{ $f['view_url'] }}" class="fm-tile fm-tile--file" target="_blank" rel="noopener noreferrer">
-                                <span class="fm-tile__icon fm-tile__icon--file" aria-hidden="true"></span>
-                                <span class="fm-tile__name" title="{{ $f['name'] }}">{{ $f['name'] }}</span>
-                                <span class="fm-tile__meta">{{ $f['size_label'] }}</span>
-                            </a>
+                            <div class="fm-grid__cell-inner">
+                                <a href="{{ $f['view_url'] }}" class="fm-tile fm-tile--file" target="_blank" rel="noopener noreferrer">
+                                    <span class="fm-tile__icon fm-tile__icon--file" aria-hidden="true"></span>
+                                    <span class="fm-tile__name" title="{{ $f['name'] }}">{{ $f['name'] }}</span>
+                                    <span class="fm-tile__meta">{{ $f['size_label'] }}</span>
+                                </a>
+                                <div class="fm-tile__share">
+                                    <button type="button" data-fm-share data-upload-id="{{ $f['upload_id'] }}" data-file-name="{{ $f['name'] }}">创建分享</button>
+                                </div>
+                            </div>
                         </li>
                     @endforeach
                 </ul>
@@ -116,6 +121,9 @@
                             <tr>
                                 <td class="uc-table__ellipsis">
                                     <a href="{{ $f['view_url'] }}" class="uc-link fm-table__name" target="_blank" rel="noopener noreferrer" title="{{ $f['name'] }}">{{ $f['name'] }}</a>
+                                    <div class="fm-table__share">
+                                        <button type="button" data-fm-share data-upload-id="{{ $f['upload_id'] }}" data-file-name="{{ $f['name'] }}">创建分享</button>
+                                    </div>
                                 </td>
                                 <td class="uc-table__narrow"><span class="fm-badge fm-badge--muted">文件</span></td>
                                 <td class="uc-table__num">{{ $f['size_label'] }}</td>
@@ -129,7 +137,35 @@
     </div>
 </div>
 
+<div id="fm-share-modal" class="fm-modal" hidden>
+    <div class="fm-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="fm-share-title">
+        <h2 id="fm-share-title" class="fm-modal__title">创建外链分享</h2>
+        <p id="fm-share-hint" class="fm-modal__hint"></p>
+        <form id="fm-share-form">
+            <input type="hidden" name="user_upload_id" id="fm-share-upload-id" value="">
+            <div class="fm-modal__field">
+                <label for="fm-share-max-views">最大查看次数（留空不限）</label>
+                <input type="number" name="max_views" id="fm-share-max-views" min="1" max="999999" placeholder="例如 10">
+            </div>
+            <div class="fm-modal__field">
+                <label for="fm-share-expires">过期时间（留空不过期）</label>
+                <input type="datetime-local" name="expires_at" id="fm-share-expires">
+            </div>
+            <div class="fm-modal__field">
+                <label for="fm-share-password">访问密码（留空则公开，至少 4 位）</label>
+                <input type="password" name="password" id="fm-share-password" autocomplete="new-password" maxlength="128" placeholder="可选">
+            </div>
+            <p id="fm-share-result" class="fm-modal__hint" hidden></p>
+            <div class="fm-modal__actions">
+                <button type="button" class="btn btn-ghost" id="fm-share-cancel">取消</button>
+                <button type="submit" class="btn btn-primary" id="fm-share-submit">生成链接</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="/js/pages/home-theme.js"></script>
 <script src="/js/pages/user-files.js"></script>
+<script src="/js/pages/file-share-modal.js"></script>
 </body>
 </html>

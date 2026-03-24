@@ -4,6 +4,7 @@ namespace app\controller;
 
 use app\middleware\RequireLogin;
 use app\model\UserUpload;
+use app\service\StorageFileServeService;
 use app\service\UploadPolicyService;
 use Carbon\Carbon;
 use support\annotation\Middleware;
@@ -14,7 +15,6 @@ use Symfony\Component\Mime\MimeTypes;
 use Throwable;
 use function base_path;
 use function json;
-use function str_starts_with;
 use function view;
 use function redirect;
 
@@ -154,30 +154,17 @@ class IndexController
             return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
         }
 
-        $absolute = $this->resolveStorageFilePath($resolved['key']);
+        $absolute = StorageFileServeService::resolveAbsolutePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
 
-        $mimeTypes = new MimeTypes();
-        $mime = $mimeTypes->guessMimeType($absolute) ?? 'application/octet-stream';
-        $basename = basename($absolute);
-        $basename = preg_replace('/["\\\\\x00-\x1F\x7F]/', '', $basename);
-        if ($basename === '') {
-            $basename = 'file';
+        $response = StorageFileServeService::buildFileResponse($absolute, false);
+        if ($response === null) {
+            return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
 
-        $inline = $this->isBrowserInlineMime($mime);
-        $disposition = $inline
-            ? 'inline; filename="' . $basename . '"'
-            : 'attachment; filename="' . $basename . '"';
-
-        $response = new Response();
-        $response->header('Content-Type', $mime);
-        $response->header('Content-Disposition', $disposition);
-        $response->header('X-Content-Type-Options', 'nosniff');
-
-        return $response->withFile($absolute);
+        return $response;
     }
 
     /**
@@ -203,7 +190,7 @@ class IndexController
             return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
 
-        $absolute = $this->resolveStorageFilePath($resolved['key']);
+        $absolute = StorageFileServeService::resolveAbsolutePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
@@ -392,7 +379,7 @@ class IndexController
         $policy = new UploadPolicyService();
         $userSeg = $policy->userStorageDirSegment($request->authUser);
 
-        $k1 = $this->normalizeStoragePathForKey($relativeRaw);
+        $k1 = StorageFileServeService::normalizeStoragePathForKey($relativeRaw);
         if ($k1 === null) {
             return ['key' => null, 'error' => 'invalid'];
         }
@@ -406,84 +393,11 @@ class IndexController
             return ['key' => $k1, 'error' => null];
         }
 
-        $k2 = $this->normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
+        $k2 = StorageFileServeService::normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
         if ($k2 !== null && $policy->userOwnsStoragePath($request->authUser, $k2)) {
             return ['key' => $k2, 'error' => null];
         }
 
         return ['key' => null, 'error' => 'forbidden'];
-    }
-
-    /**
-     * 规范化 storage 相对路径（与库中 user_uploads.storage_path 一致）；非法返回 null。
-     */
-    private function normalizeStoragePathForKey(string $raw): ?string
-    {
-        $raw = trim(str_replace('\\', '/', $raw), '/');
-        if ($raw === '') {
-            return null;
-        }
-        $parts = array_values(array_filter(explode('/', $raw), static fn ($p) => $p !== '' && $p !== '.' && $p !== '..'));
-        if ($parts === [] || count($parts) > 32) {
-            return null;
-        }
-        foreach ($parts as $p) {
-            if (strlen($p) > 255 || !preg_match('/^[a-zA-Z0-9._-]+$/', $p)) {
-                return null;
-            }
-        }
-
-        return implode('/', $parts);
-    }
-
-    /**
-     * 将相对路径解析为 storage 下的绝对文件路径；非法或不存在则返回 null。
-     */
-    private function resolveStorageFilePath(string $raw): ?string
-    {
-        $partsStr = $this->normalizeStoragePathForKey($raw);
-        if ($partsStr === null) {
-            return null;
-        }
-        $parts = explode('/', $partsStr);
-
-        $root = realpath(base_path('storage'));
-        if ($root === false || !is_dir($root)) {
-            return null;
-        }
-
-        $full = $root . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
-        if (!is_file($full)) {
-            return null;
-        }
-
-        $resolved = realpath($full);
-        if ($resolved === false || !str_starts_with($resolved, $root)) {
-            return null;
-        }
-
-        return $resolved;
-    }
-
-    /**
-     * 是否适合在浏览器中直接打开（非下载）。排除可在页面中执行脚本的类型以降低同源风险。
-     */
-    private function isBrowserInlineMime(string $mime): bool
-    {
-        $mime = strtolower($mime);
-
-        if (str_starts_with($mime, 'image/')) {
-            return $mime !== 'image/svg+xml';
-        }
-        if (str_starts_with($mime, 'video/') || str_starts_with($mime, 'audio/')) {
-            return true;
-        }
-
-        return in_array($mime, [
-            'application/pdf',
-            'text/plain',
-            'text/csv',
-            'text/markdown',
-        ], true);
     }
 }

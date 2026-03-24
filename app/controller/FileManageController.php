@@ -65,6 +65,7 @@ class FileManageController
                 $orig = (string) ($row->original_name ?? '');
                 $name = $orig !== '' ? $orig : $rest;
                 $files[] = [
+                    'upload_id' => (int) $row->id,
                     'name' => $name,
                     'view_url' => $policy->fileViewUrl($user, $storagePath, (string) ($row->extension ?? '')),
                     'size_label' => HumanBytes::format((int) ($row->file_size ?? 0)),

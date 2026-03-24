@@ -29,7 +29,7 @@
         <div class="page-header__main">
             <p class="uc-breadcrumb"><a href="/home" class="uc-breadcrumb__link">文件上传</a><span class="uc-breadcrumb__sep" aria-hidden="true">/</span><span class="uc-breadcrumb__here">用户中心</span></p>
             <h1>用户中心</h1>
-            <p class="lead uc-lead">查看账号信息与上传统计；最近上传可在此打开，也可前往<a href="/user/files" class="uc-breadcrumb__link">文件管理</a>按目录浏览全部资源。</p>
+            <p class="lead uc-lead">查看账号信息与上传统计；最近上传可在此打开，也可前往<a href="/user/files" class="uc-breadcrumb__link">文件管理</a>按目录浏览全部资源，或管理<a href="/user/shares" class="uc-breadcrumb__link">外链分享</a>。</p>
         </div>
     </header>
 

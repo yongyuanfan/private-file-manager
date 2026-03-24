@@ -15,10 +15,18 @@
 use support\Request;
 
 return [
-    /** 前台页面顶部展示的网站名称 */
+    /**
+     * 前台页面顶部展示的网站名称
+     */
     'site_name' => 'Xinkin OSS',
-    /** 是否开放用户自助注册；为 false 时访问 /register 会跳转登录页并提示「注册已关闭」 */
+    /**
+     * 是否开放用户自助注册；为 false 时访问 /register 会跳转登录页并提示「注册已关闭」
+     */
     'registration_open' => false,
+    /**
+     * 外链访问密码 Cookie 签名密钥。
+     */
+    'share_link_secret' => 'change-me-share-link-secret',
     'debug' => true,
     'error_reporting' => E_ALL,
     'default_timezone' => 'Asia/Shanghai',
