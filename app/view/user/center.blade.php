@@ -19,6 +19,11 @@
     <link rel="stylesheet" href="/css/pages/user-center.css">
 </head>
 <body>
+<div class="theme-switcher" role="group" aria-label="颜色主题">
+    <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
+    <button type="button" data-theme-value="dark" aria-pressed="false">深色</button>
+    <button type="button" data-theme-value="system" aria-pressed="false">跟随系统</button>
+</div>
 <div class="page page--user-center">
     <header class="page-header">
         <div class="page-header__main">
@@ -35,11 +40,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-        <div class="theme-switcher" role="group" aria-label="颜色主题">
-            <button type="button" data-theme-value="light" aria-pressed="true">浅色</button>
-            <button type="button" data-theme-value="dark" aria-pressed="false">深色</button>
-            <button type="button" data-theme-value="system" aria-pressed="false">跟随系统</button>
         </div>
     </header>
 

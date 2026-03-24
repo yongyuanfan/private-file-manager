@@ -179,6 +179,9 @@ body {
 }
 
 .theme-switcher {
+  position: absolute;
+  top: 20px;
+  right: 20px;
   display: inline-flex;
   flex-shrink: 0;
   padding: 3px;
