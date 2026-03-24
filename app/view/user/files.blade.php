@@ -43,11 +43,18 @@
             <h2 id="fm-heading" class="uc-section-title fm-sr-only">资源列表</h2>
 
             <div class="fm-toolbar">
-                @if($parentUrl !== null)
-                    <a href="{{ $parentUrl }}" class="btn btn-ghost btn-sm">← 上级目录</a>
-                @else
-                    <span class="btn btn-ghost btn-sm fm-btn--muted" aria-disabled="true">← 上级目录</span>
-                @endif
+                <div class="fm-toolbar__actions">
+                    @if($parentUrl !== null)
+                        <a href="{{ $parentUrl }}" class="btn btn-ghost btn-sm fm-toolbar__back">← 上级目录</a>
+                    @else
+                        <span class="btn btn-ghost btn-sm fm-toolbar__back fm-btn--muted" aria-disabled="true">← 上级目录</span>
+                    @endif
+
+                    <div class="fm-view-toggle" role="group" aria-label="展示方式">
+                        <button type="button" class="fm-view-toggle__btn" data-fm-view="grid" aria-pressed="true">宫格</button>
+                        <button type="button" class="fm-view-toggle__btn" data-fm-view="list" aria-pressed="false">列表</button>
+                    </div>
+                </div>
 
                 <nav class="fm-path" aria-label="当前路径">
                     <a href="/user/files" class="fm-path__root {{ $relDir === '' ? 'is-here' : '' }}">根目录</a>
@@ -60,11 +67,6 @@
                         @endif
                     @endforeach
                 </nav>
-
-                <div class="fm-view-toggle" role="group" aria-label="展示方式">
-                    <button type="button" class="fm-view-toggle__btn" data-fm-view="grid" aria-pressed="true">宫格</button>
-                    <button type="button" class="fm-view-toggle__btn" data-fm-view="list" aria-pressed="false">列表</button>
-                </div>
             </div>
 
             @if($isEmpty)

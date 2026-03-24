@@ -18,10 +18,18 @@
 
 .fm-toolbar {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.fm-toolbar__actions {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px 18px;
-  margin-bottom: 18px;
 }
 
 .fm-btn--muted {
@@ -30,8 +38,13 @@
   cursor: default;
 }
 
+.fm-toolbar__back.btn {
+  padding: 6px 9px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
 .fm-path {
-  flex: 1;
   min-width: 0;
   font-size: 0.85rem;
   line-height: 1.4;
