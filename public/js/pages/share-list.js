@@ -42,6 +42,27 @@
     });
   });
 
+  function showToast(msg) {
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.setAttribute('role', 'status');
+    el.style.zIndex = '220';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () {
+      el.classList.add('is-visible');
+    });
+    var hideMs = 2600;
+    setTimeout(function () {
+      el.classList.remove('is-visible');
+      setTimeout(function () {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      }, 320);
+    }, hideMs);
+  }
+
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       return navigator.clipboard.writeText(text);
@@ -78,13 +99,9 @@
     var path = btn.getAttribute('data-share-copy') || '';
     var origin = window.location.origin || '';
     var url = path.indexOf('http') === 0 ? path : origin + path;
-    var label = btn.getAttribute('data-share-copy-label') || '复制链接';
     copyText(url)
       .then(function () {
-        btn.textContent = '已复制';
-        setTimeout(function () {
-          btn.textContent = label;
-        }, 2000);
+        showToast('链接已复制到剪贴板');
         var dd = btn.closest('details.fm-share-menu');
         if (dd) dd.open = false;
       })
