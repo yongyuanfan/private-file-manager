@@ -38,6 +38,10 @@
         </div>
     </header>
 
+    @if(!empty($shareFlashError))
+        <p class="uc-flash uc-flash--err" role="alert">{{ $shareFlashError }}</p>
+    @endif
+
     <div class="uc-layout">
         <section class="card uc-card fm-card-shell" aria-labelledby="fm-heading">
             <h2 id="fm-heading" class="uc-section-title fm-sr-only">资源列表</h2>
@@ -93,7 +97,7 @@
                                     <span class="fm-tile__meta">{{ $f['size_label'] }}</span>
                                 </a>
                                 <div class="fm-tile__share">
-                                    <button type="button" data-fm-share data-upload-id="{{ $f['upload_id'] }}" data-file-name="{{ $f['name'] }}">创建分享</button>
+                                    <a href="/user/shares/create?{{ $f['share_create_qs'] }}" class="fm-share-create-link">创建分享</a>
                                 </div>
                             </div>
                         </li>
@@ -124,7 +128,7 @@
                                 <td class="uc-table__ellipsis">
                                     <a href="{{ $f['view_url'] }}" class="uc-link fm-table__name" target="_blank" rel="noopener noreferrer" title="{{ $f['name'] }}">{{ $f['name'] }}</a>
                                     <div class="fm-table__share">
-                                        <button type="button" data-fm-share data-upload-id="{{ $f['upload_id'] }}" data-file-name="{{ $f['name'] }}">创建分享</button>
+                                        <a href="/user/shares/create?{{ $f['share_create_qs'] }}" class="fm-share-create-link">创建分享</a>
                                     </div>
                                 </td>
                                 <td class="uc-table__narrow"><span class="fm-badge fm-badge--muted">文件</span></td>
@@ -139,35 +143,7 @@
     </div>
 </div>
 
-<div id="fm-share-modal" class="fm-modal" hidden>
-    <div class="fm-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="fm-share-title">
-        <h2 id="fm-share-title" class="fm-modal__title">创建外链分享</h2>
-        <p id="fm-share-hint" class="fm-modal__hint"></p>
-        <form id="fm-share-form">
-            <input type="hidden" name="user_upload_id" id="fm-share-upload-id" value="">
-            <div class="fm-modal__field">
-                <label for="fm-share-max-views">最大查看次数（留空不限）</label>
-                <input type="number" name="max_views" id="fm-share-max-views" min="1" max="999999" placeholder="例如 10">
-            </div>
-            <div class="fm-modal__field">
-                <label for="fm-share-expires">过期时间（留空不过期）</label>
-                <input type="datetime-local" name="expires_at" id="fm-share-expires">
-            </div>
-            <div class="fm-modal__field">
-                <label for="fm-share-password">访问密码（留空则公开，至少 4 位）</label>
-                <input type="password" name="password" id="fm-share-password" autocomplete="new-password" maxlength="128" placeholder="可选">
-            </div>
-            <p id="fm-share-result" class="fm-modal__hint" hidden></p>
-            <div class="fm-modal__actions">
-                <button type="button" class="btn btn-ghost" id="fm-share-cancel">取消</button>
-                <button type="submit" class="btn btn-primary" id="fm-share-submit">生成链接</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script src="/js/pages/home-theme.js"></script>
 <script src="/js/pages/user-files.js"></script>
-<script src="/js/pages/file-share-modal.js"></script>
 </body>
 </html>

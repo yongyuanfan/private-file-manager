@@ -8,6 +8,7 @@ use app\model\FileShareAccessLog;
 use app\model\UserUpload;
 use app\service\FileShareService;
 use app\service\StorageFileServeService;
+use app\service\UploadPolicyService;
 use Carbon\Carbon;
 use support\annotation\Middleware;
 use support\annotation\route\Route;
@@ -227,6 +228,27 @@ class FileShareController
         ]);
     }
 
+    #[Route('/user/shares/create', 'GET')]
+    #[Middleware(RequireLogin::class)]
+    public function createForm(Request $request): Response
+    {
+        $user = $request->authUser;
+        $uploadId = (int) $request->get('user_upload_id', 0);
+        $fromRaw = (string) $request->get('from', '');
+
+        $upload = UserUpload::query()->where('id', $uploadId)->where('user_id', $user->id)->first();
+        if ($upload === null) {
+            return redirect('/user/files?share_err=forbidden');
+        }
+
+        $fromRel = $this->sanitizeBrowseFrom($fromRaw);
+
+        return $this->shareCreateFormResponse($request, $upload, null, [
+            'max_views' => '',
+            'expires_at' => '',
+        ], $fromRel);
+    }
+
     #[Route('/user/shares', 'POST')]
     #[Middleware(RequireLogin::class)]
     public function create(Request $request): Response
@@ -236,17 +258,27 @@ class FileShareController
         $maxViewsRaw = trim((string) $request->post('max_views', ''));
         $expiresRaw = trim((string) $request->post('expires_at', ''));
         $password = (string) $request->post('password', '');
+        $fromRel = $this->sanitizeBrowseFrom((string) $request->post('from', ''));
 
         $upload = UserUpload::query()->where('id', $uploadId)->where('user_id', $user->id)->first();
         if ($upload === null) {
-            return $this->createErrorResponse($request, '文件不存在或无权操作');
+            if ($this->wantsJson($request)) {
+                return json(['code' => 1, 'msg' => '文件不存在或无权操作'])->withStatus(400);
+            }
+
+            return redirect('/user/files?share_err=forbidden');
         }
+
+        $fieldSnapshot = [
+            'max_views' => $maxViewsRaw,
+            'expires_at' => $expiresRaw,
+        ];
 
         $maxViews = null;
         if ($maxViewsRaw !== '') {
             $maxViews = (int) $maxViewsRaw;
             if ($maxViews < 1 || $maxViews > 999_999) {
-                return $this->createErrorResponse($request, '次数须在 1～999999 之间，或留空表示不限');
+                return $this->createErrorResponse($request, '次数须在 1～999999 之间，或留空表示不限', $upload, $fieldSnapshot, $fromRel);
             }
         }
 
@@ -255,23 +287,23 @@ class FileShareController
             try {
                 $expiresAt = Carbon::parse($expiresRaw);
             } catch (Throwable) {
-                return $this->createErrorResponse($request, '过期时间格式不正确');
+                return $this->createErrorResponse($request, '过期时间格式不正确', $upload, $fieldSnapshot, $fromRel);
             }
             if ($expiresAt->lte(Carbon::now())) {
-                return $this->createErrorResponse($request, '过期时间须晚于当前时间');
+                return $this->createErrorResponse($request, '过期时间须晚于当前时间', $upload, $fieldSnapshot, $fromRel);
             }
             if ($expiresAt->gt(Carbon::now()->addYear())) {
-                return $this->createErrorResponse($request, '过期时间最长不超过一年');
+                return $this->createErrorResponse($request, '过期时间最长不超过一年', $upload, $fieldSnapshot, $fromRel);
             }
         }
 
         $passwordHash = null;
         if ($password !== '') {
             if (strlen($password) < 4) {
-                return $this->createErrorResponse($request, '访问密码至少 4 位，或留空表示不设密码');
+                return $this->createErrorResponse($request, '访问密码至少 4 位，或留空表示不设密码', $upload, $fieldSnapshot, $fromRel);
             }
             if (strlen($password) > 128) {
-                return $this->createErrorResponse($request, '访问密码过长');
+                return $this->createErrorResponse($request, '访问密码过长', $upload, $fieldSnapshot, $fromRel);
             }
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         }
@@ -299,7 +331,7 @@ class FileShareController
         }
 
         if ($share === null) {
-            return $this->createErrorResponse($request, '创建失败，请稍后重试');
+            return $this->createErrorResponse($request, '创建失败，请稍后重试', $upload, $fieldSnapshot, $fromRel);
         }
 
         $landing = '/share/' . $share->token;
@@ -398,12 +430,74 @@ class FileShareController
         return str_contains($accept, 'application/json');
     }
 
-    private function createErrorResponse(Request $request, string $message): Response
-    {
+    /**
+     * @param  array{max_views: string, expires_at: string}  $fieldSnapshot
+     */
+    private function createErrorResponse(
+        Request $request,
+        string $message,
+        ?UserUpload $upload = null,
+        array $fieldSnapshot = ['max_views' => '', 'expires_at' => ''],
+        string $fromRel = '',
+    ): Response {
         if ($this->wantsJson($request)) {
             return json(['code' => 1, 'msg' => $message])->withStatus(400);
         }
 
+        if ($upload !== null) {
+            return $this->shareCreateFormResponse($request, $upload, $message, $fieldSnapshot, $fromRel);
+        }
+
         return new Response(400, ['Content-Type' => 'text/plain; charset=utf-8'], $message);
+    }
+
+    private function sanitizeBrowseFrom(string $raw): string
+    {
+        $policy = new UploadPolicyService();
+        $rel = $policy->sanitizeRelativeSubdir($raw);
+
+        return $rel ?? '';
+    }
+
+    private function filesBrowseUrl(string $relDir): string
+    {
+        if ($relDir === '') {
+            return '/user/files';
+        }
+
+        return '/user/files?' . http_build_query(['path' => $relDir]);
+    }
+
+    /**
+     * @param  array{max_views: string, expires_at: string}  $fieldValues
+     */
+    private function shareCreateFormResponse(
+        Request $request,
+        UserUpload $upload,
+        ?string $errorMessage,
+        array $fieldValues,
+        string $fromRel,
+    ): Response {
+        $user = $request->authUser;
+        $user->load('membershipPlan');
+        $planName = $user->membershipPlan !== null ? (string) $user->membershipPlan->name : '—';
+        $display = ($user->display_name !== null && $user->display_name !== '')
+            ? $user->display_name
+            : $user->email;
+
+        $on = (string) ($upload->original_name ?? '');
+        $fileLabel = $on !== '' ? $on : basename((string) $upload->storage_path);
+
+        return view('user/share_create', [
+            'userDisplay' => $display,
+            'headerUserMeta' => $planName,
+            'headerNav' => 'user_files',
+            'uploadId' => (int) $upload->id,
+            'fileLabel' => $fileLabel,
+            'backUrl' => $this->filesBrowseUrl($fromRel),
+            'fromRel' => $fromRel,
+            'errorMessage' => $errorMessage,
+            'fieldValues' => $fieldValues,
+        ]);
     }
 }

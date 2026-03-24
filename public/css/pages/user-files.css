@@ -270,6 +270,12 @@ html[data-theme='dark'] .fm-tile__icon--dir {
   border: 1px solid var(--border);
 }
 
+.uc-flash--err {
+  background: var(--toast-error-border);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
 .fm-share-url {
   margin-top: 6px;
   font-size: 0.75rem;
@@ -413,64 +419,38 @@ button.fm-share-menu__item:hover {
   white-space: nowrap;
 }
 
-.fm-modal[hidden] {
-  display: none !important;
+.fm-share-create-card {
+  max-width: 440px;
 }
 
-.fm-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  background: color-mix(in srgb, var(--bg-deep) 55%, transparent);
-  backdrop-filter: blur(4px);
-}
-
-@media (min-width: 640px) {
-  .fm-modal {
-    align-items: center;
-  }
-}
-
-.fm-modal__dialog {
-  width: 100%;
-  max-width: 400px;
-  max-height: min(90vh, 560px);
-  overflow: auto;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 22px 20px;
-  box-shadow: var(--card-shadow);
-}
-
-.fm-modal__title {
-  margin: 0 0 6px;
-  font-size: 1.1rem;
-}
-
-.fm-modal__hint {
-  margin: 0 0 16px;
-  font-size: 0.88rem;
+.fm-share-create__file {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
   color: var(--muted);
   line-height: 1.45;
 }
 
-.fm-modal__field {
+.fm-share-create__file strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.fm-share-create__form {
+  margin: 0;
+}
+
+.fm-share-create__field {
   margin-bottom: 14px;
 }
 
-.fm-modal__field label {
+.fm-share-create__field label {
   display: block;
   font-size: 0.82rem;
   margin-bottom: 6px;
   color: var(--muted);
 }
 
-.fm-modal__field input {
+.fm-share-create__field input {
   width: 100%;
   box-sizing: border-box;
   padding: 9px 11px;
@@ -481,14 +461,14 @@ button.fm-share-menu__item:hover {
   font-size: 0.95rem;
 }
 
-.fm-modal__actions {
+.fm-share-create__actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 18px;
 }
 
-.fm-modal__actions .btn {
+.fm-share-create__actions .btn {
   flex: 1;
   min-width: 100px;
 }
@@ -498,17 +478,13 @@ button.fm-share-menu__item:hover {
   font-size: 0.72rem;
 }
 
-.fm-tile__share button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
+.fm-share-create-link {
   color: var(--muted);
   text-decoration: underline;
   font: inherit;
 }
 
-.fm-tile__share button:hover {
+.fm-share-create-link:hover {
   color: var(--accent);
 }
 
@@ -516,19 +492,8 @@ button.fm-share-menu__item:hover {
   margin-top: 4px;
 }
 
-.fm-table__share button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--muted);
-  text-decoration: underline;
+.fm-table__share .fm-share-create-link {
   font-size: 0.78rem;
-  font: inherit;
-}
-
-.fm-table__share button:hover {
-  color: var(--accent);
 }
 
 /* —— 分享管理：小屏卡片式列表 —— */

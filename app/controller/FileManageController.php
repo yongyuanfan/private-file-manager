@@ -64,11 +64,16 @@ class FileManageController
             } else {
                 $orig = (string) ($row->original_name ?? '');
                 $name = $orig !== '' ? $orig : $rest;
+                $shareQs = ['user_upload_id' => (int) $row->id];
+                if ($relDir !== '') {
+                    $shareQs['from'] = $relDir;
+                }
                 $files[] = [
                     'upload_id' => (int) $row->id,
                     'name' => $name,
                     'view_url' => $policy->fileViewUrl($user, $storagePath, (string) ($row->extension ?? '')),
                     'size_label' => HumanBytes::format((int) ($row->file_size ?? 0)),
+                    'share_create_qs' => http_build_query($shareQs),
                 ];
             }
         }
@@ -111,6 +116,11 @@ class FileManageController
             ? (string) $user->membershipPlan->name
             : '—';
 
+        $shareErr = (string) $request->get('share_err', '');
+        $shareFlashError = $shareErr === 'forbidden'
+            ? '无法创建分享：文件不存在或无权操作。'
+            : null;
+
         return view('user/files', [
             'userDisplay' => $display,
             'headerUserMeta' => $planName,
@@ -120,6 +130,7 @@ class FileManageController
             'dirs' => $dirs,
             'files' => $files,
             'isEmpty' => $dirs === [] && $files === [],
+            'shareFlashError' => $shareFlashError,
         ]);
     }
 
