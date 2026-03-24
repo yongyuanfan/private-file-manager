@@ -261,13 +261,108 @@ html[data-theme='dark'] .fm-tile__icon--dir {
 }
 
 .fm-share-actions {
-  white-space: normal;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.fm-share-actions .uc-link,
-.fm-share-actions .fm-link-btn {
-  display: inline;
-  margin-right: 10px;
+.fm-share-menu {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+}
+
+.fm-share-menu__summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--btn-ghost-bg);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.fm-share-menu__summary::-webkit-details-marker {
+  display: none;
+}
+
+.fm-share-menu__summary::after {
+  content: '';
+  width: 0.55em;
+  height: 0.55em;
+  margin-left: 2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  opacity: 0.65;
+}
+
+.fm-share-menu[open] > .fm-share-menu__summary {
+  background: color-mix(in srgb, var(--accent) 14%, var(--btn-ghost-bg));
+  color: var(--text);
+}
+
+.fm-share-menu__summary:hover {
+  background: var(--btn-ghost-hover);
+}
+
+.fm-share-menu__panel {
+  position: fixed;
+  z-index: 200;
+  min-width: 10.5rem;
+  max-width: min(calc(100vw - 24px), 20rem);
+  padding: 6px;
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow);
+}
+
+.fm-share-menu__item {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  text-decoration: none;
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+a.fm-share-menu__item:hover,
+button.fm-share-menu__item:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.fm-share-menu__item--danger {
+  color: var(--danger);
+}
+
+.fm-share-menu__item--danger:hover {
+  background: var(--toast-error-border);
+  color: var(--danger);
+}
+
+.fm-share-menu__form {
+  display: block;
+  margin: 0;
+  padding: 0;
 }
 
 .fm-inline-form {
@@ -413,4 +508,173 @@ html[data-theme='dark'] .fm-tile__icon--dir {
 
 .fm-table__share button:hover {
   color: var(--accent);
+}
+
+/* —— 分享管理：小屏卡片式列表 —— */
+@media (max-width: 639px) {
+  .page--shares.page {
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-top: 20px;
+    padding-bottom: 56px;
+  }
+
+  .page--shares .page-header h1 {
+    font-size: 1.45rem;
+    letter-spacing: -0.02em;
+  }
+
+  .page--shares .uc-breadcrumb {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  .page--shares .uc-lead {
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+
+  .page--shares .uc-flash {
+    font-size: 0.85rem;
+    padding: 9px 12px;
+  }
+
+  .page--shares .fm-shares-shell.uc-card {
+    padding: 14px 12px 16px;
+  }
+
+  .page--shares .fm-shares-scroll {
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .page--shares .fm-shares-table {
+    width: 100%;
+    display: block;
+  }
+
+  .page--shares .fm-shares-table thead {
+    display: none;
+  }
+
+  .page--shares .fm-shares-table tbody {
+    display: block;
+  }
+
+  .page--shares .fm-shares-table tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    padding: 12px 12px 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--file-row-bg);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .page--shares .fm-shares-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .page--shares .fm-shares-table tbody td {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    text-align: right;
+    vertical-align: middle;
+  }
+
+  .page--shares .fm-shares-table tbody td:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
+    padding-top: 10px;
+  }
+
+  .page--shares .fm-shares-table tbody td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 38%;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    line-height: 1.45;
+    padding-top: 3px;
+  }
+
+  .page--shares .fm-shares-table tbody td .fm-shares-table__val {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .page--shares .fm-shares-table tbody td[data-label='状态'] .fm-shares-table__val {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .page--shares .fm-shares-table__file {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    gap: 6px;
+  }
+
+  .page--shares .fm-shares-table__file::before {
+    max-width: none;
+    padding-top: 0;
+  }
+
+  .page--shares .fm-shares-table__file > .fm-table__name {
+    flex: none !important;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .page--shares .fm-shares-table__expires {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .page--shares .fm-shares-table tbody td.fm-share-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .page--shares .fm-shares-table tbody td.fm-share-actions::before {
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .page--shares .fm-shares-table tbody td.fm-share-actions > .fm-share-menu {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .page--shares .fm-share-menu__summary {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    box-sizing: border-box;
+  }
+
+  .page--shares .fm-shares-table tbody tr:hover td {
+    background: transparent;
+  }
 }

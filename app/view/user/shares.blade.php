@@ -25,7 +25,7 @@
     'headerUserMeta' => $headerUserMeta,
     'headerNav' => 'user_shares',
 ])
-<div class="page page--user-center page--user-files">
+<div class="page page--user-center page--user-files page--shares">
     <header class="page-header">
         <div class="page-header__main">
             <p class="uc-breadcrumb">
@@ -46,12 +46,12 @@
     @endif
 
     <div class="uc-layout">
-        <section class="card uc-card fm-card-shell">
+        <section class="card uc-card fm-card-shell fm-shares-shell">
             @if(count($items) === 0)
                 <p class="uc-empty">暂无分享。请在文件管理中对文件使用「创建分享」。</p>
             @else
-                <div class="uc-table-scroll fm-table-scroll">
-                    <table class="uc-table fm-table">
+                <div class="uc-table-scroll fm-table-scroll fm-shares-scroll">
+                    <table class="uc-table fm-table fm-shares-table">
                         <thead>
                         <tr>
                             <th scope="col">文件</th>
@@ -65,28 +65,35 @@
                         <tbody>
                         @foreach($items as $it)
                             <tr>
-                                <td class="uc-table__ellipsis">
+                                <td class="uc-table__ellipsis fm-shares-table__file" data-label="文件">
                                     <span class="fm-table__name" title="{{ $it['file_label'] }}">{{ $it['file_label'] }}</span>
-                                    <div class="fm-share-url"><code>{{ $it['landing_url'] }}</code></div>
                                 </td>
-                                <td class="uc-table__narrow">{{ $it['has_password'] ? '是' : '否' }}</td>
-                                <td>{{ $it['views'] }}</td>
-                                <td>{{ $it['expires_label'] }}</td>
-                                <td>
-                                    @if($it['revoked'])
-                                        <span class="fm-badge fm-badge--muted">已撤销</span>
-                                    @else
-                                        <span class="fm-badge">有效</span>
-                                    @endif
+                                <td class="uc-table__narrow" data-label="密码"><span class="fm-shares-table__val">{{ $it['has_password'] ? '是' : '否' }}</span></td>
+                                <td data-label="次数"><span class="fm-shares-table__val">{{ $it['views'] }}</span></td>
+                                <td class="fm-shares-table__expires" data-label="过期"><span class="fm-shares-table__val">{{ $it['expires_label'] }}</span></td>
+                                <td data-label="状态">
+                                    <span class="fm-shares-table__val">
+                                        @if($it['revoked'])
+                                            <span class="fm-badge fm-badge--muted">已撤销</span>
+                                        @else
+                                            <span class="fm-badge">有效</span>
+                                        @endif
+                                    </span>
                                 </td>
-                                <td class="uc-table__narrow fm-share-actions">
-                                    <a href="{{ $it['landing_url'] }}" class="uc-link" target="_blank" rel="noopener noreferrer">打开</a>
-                                    <a href="/user/shares/{{ $it['id'] }}/audit" class="uc-link">审计</a>
-                                    @if(!$it['revoked'])
-                                        <form method="post" action="/user/shares/{{ $it['id'] }}/revoke" class="fm-inline-form" onsubmit="return confirm('确定撤销该分享？外链将立即失效。');">
-                                            <button type="submit" class="uc-link fm-link-btn">撤销</button>
-                                        </form>
-                                    @endif
+                                <td class="uc-table__narrow fm-share-actions" data-label="操作">
+                                    <details class="fm-share-menu">
+                                        <summary class="fm-share-menu__summary">操作</summary>
+                                        <div class="fm-share-menu__panel" role="menu">
+                                            <a href="{{ $it['landing_url'] }}" class="fm-share-menu__item" role="menuitem" target="_blank" rel="noopener noreferrer">打开</a>
+                                            <a href="/user/shares/{{ $it['id'] }}/audit" class="fm-share-menu__item" role="menuitem">审计</a>
+                                            <button type="button" class="fm-share-menu__item" role="menuitem" data-share-copy="{{ $it['landing_url'] }}" data-share-copy-label="复制链接">复制链接</button>
+                                            @if(!$it['revoked'])
+                                                <form method="post" action="/user/shares/{{ $it['id'] }}/revoke" class="fm-share-menu__form" onsubmit="return confirm('确定撤销该分享？外链将立即失效。');">
+                                                    <button type="submit" class="fm-share-menu__item fm-share-menu__item--danger" role="menuitem">撤销</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </details>
                                 </td>
                             </tr>
                         @endforeach
@@ -99,5 +106,6 @@
 </div>
 
 <script src="/js/pages/home-theme.js"></script>
+<script src="/js/pages/share-list.js"></script>
 </body>
 </html>

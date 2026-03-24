@@ -30,10 +30,9 @@
     });
   });
 
-  cancelBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', function (e) {
-    if (e.target === modal) closeModal();
-  });
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeModal);
+  }
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -55,16 +54,7 @@
           resultEl.hidden = false;
           return;
         }
-        var land = (x.body.data && x.body.data.landing_url) ? x.body.data.landing_url : '';
-        var origin = window.location.origin || '';
-        var full = land.indexOf('http') === 0 ? land : origin + land;
-        resultEl.innerHTML =
-          '已创建。落地页：<a href="' +
-          full +
-          '" target="_blank" rel="noopener noreferrer">' +
-          full +
-          '</a>（可复制给外部人员）';
-        resultEl.hidden = false;
+        window.location.assign('/user/shares?created=1');
       })
       .catch(function () {
         resultEl.textContent = '网络错误，请稍后重试';
