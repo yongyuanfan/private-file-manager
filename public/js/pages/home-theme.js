@@ -46,5 +46,18 @@
         });
       })(btns[j]);
     }
+
+    var userMenu = document.querySelector('.site-header__user-dropdown');
+    if (userMenu) {
+      document.addEventListener('click', function (e) {
+        if (!userMenu.open) return;
+        if (userMenu.contains(e.target)) return;
+        userMenu.removeAttribute('open');
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape' || !userMenu.open) return;
+        userMenu.removeAttribute('open');
+      });
+    }
   });
 })();
