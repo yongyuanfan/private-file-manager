@@ -3,6 +3,7 @@
 namespace app\controller;
 
 use app\middleware\RequireLogin;
+use app\model\User;
 use app\model\UserUpload;
 use app\service\UploadPolicyService;
 use Carbon\Carbon;
@@ -53,10 +54,10 @@ class IndexController
     }
 
     /**
-     * 上传文件：写入项目根目录下 storage，POST 可选 subdir 为相对子目录，保存文件名为 UUID（保留扩展名）。
+     * 上传文件：写入 storage/{用户邮箱目录}/{子目录}/，子目录未填时默认为当日 Ymd（如 20260324）；文件名为 UUID（保留扩展名）。
      *
-     * @param Request $request multipart：file；可选 subdir
-     * @return Response JSON：data.saved_as、data.relative_path（相对 storage）
+     * @param Request $request multipart：file；可选 subdir（相对用户目录，规则同原 sanitize）
+     * @return Response JSON：data.saved_as、data.relative_path（相对 storage 根）
      */
     #[Route('/upload', 'POST')]
     public function upload(Request $request): Response
@@ -73,6 +74,9 @@ class IndexController
         if ($subdir === null) {
             return json(['code' => 5, 'msg' => '子目录不合法，仅允许字母、数字、下划线、连字符，多级用 / 分隔']);
         }
+        if ($subdir === '') {
+            $subdir = Carbon::now()->format('Ymd');
+        }
 
         $extRaw = pathinfo((string) $file->getUploadName(), PATHINFO_EXTENSION);
         $extNoDot = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', $extRaw));
@@ -84,8 +88,11 @@ class IndexController
             return json(['code' => 6, 'msg' => $deny]);
         }
 
+        $userSeg = $this->userStorageDirSegment($request->authUser);
+        $relativeDir = $userSeg . '/' . $subdir;
+
         $root = base_path('storage');
-        $dir = $subdir === '' ? $root : $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subdir);
+        $dir = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             return json(['code' => 3, 'msg' => '无法创建存储目录']);
         }
@@ -99,7 +106,7 @@ class IndexController
             return json(['code' => 4, 'msg' => '保存文件失败']);
         }
 
-        $relative = $subdir === '' ? $destName : str_replace(DIRECTORY_SEPARATOR, '/', $subdir) . '/' . $destName;
+        $relative = $relativeDir . '/' . $destName;
 
         $mimeTypes = new MimeTypes();
         $mime = $mimeTypes->guessMimeType($dest) ?? null;
@@ -131,24 +138,21 @@ class IndexController
     }
 
     /**
-     * 访问 storage 内文件：GET 参数 path 为相对 storage 的路径。
-     * 浏览器可直接展示的类型（如常见图片、PDF、音视频、纯文本）使用 inline，其余为 attachment 下载。
+     * 访问 storage 内文件：GET path 为相对 storage 的路径；也可传相对当前用户邮箱目录下的路径（会自动加上该目录再校验归属）。
      */
     #[Route('/file', 'GET')]
     public function serveStorageFile(Request $request): Response
     {
         $relative = (string) $request->get('path', '');
-        $key = $this->normalizeStoragePathForKey($relative);
-        if ($key === null) {
+        $resolved = $this->resolveAuthorizedStorageKeyForRead($request, $relative);
+        if ($resolved['error'] === 'empty' || $resolved['error'] === 'invalid') {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
-
-        $policy = new UploadPolicyService();
-        if (!$policy->userOwnsStoragePath($request->authUser, $key)) {
+        if ($resolved['error'] === 'forbidden') {
             return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
         }
 
-        $absolute = $this->resolveStorageFilePath($relative);
+        $absolute = $this->resolveStorageFilePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
@@ -186,17 +190,15 @@ class IndexController
         }
 
         $relative = (string) $request->get('path', '');
-        $key = $this->normalizeStoragePathForKey($relative);
-        if ($key === null) {
+        $resolved = $this->resolveAuthorizedStorageKeyForRead($request, $relative);
+        if ($resolved['error'] === 'empty' || $resolved['error'] === 'invalid') {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
-
-        $policy = new UploadPolicyService();
-        if (!$policy->userOwnsStoragePath($request->authUser, $key)) {
+        if ($resolved['error'] === 'forbidden') {
             return new Response(403, ['Content-Type' => 'text/plain; charset=utf-8'], '无权访问该文件');
         }
 
-        $absolute = $this->resolveStorageFilePath($relative);
+        $absolute = $this->resolveStorageFilePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
         }
@@ -371,8 +373,62 @@ class IndexController
     }
 
     /**
+     * 将用户邮箱转为 storage 下的一级目录名（与 normalizeStoragePathForKey 分段规则兼容）。
+     */
+    private function userStorageDirSegment(User $user): string
+    {
+        $email = strtolower(trim((string) $user->email));
+        $seg = str_replace('@', '_at_', $email);
+        $seg = (string) preg_replace('/[^a-z0-9._-]+/i', '_', $seg);
+        $seg = trim($seg, '._-');
+        if ($seg === '' || strlen($seg) > 200) {
+            return 'user_' . $user->id;
+        }
+
+        return $seg;
+    }
+
+    /**
+     * 解析 GET path：先按完整相对路径匹配归属；否则在当前用户邮箱目录下解析（默认只查该用户目录树）。
+     *
+     * @return array{key: string|null, error: 'empty'|'invalid'|'forbidden'|null}
+     */
+    private function resolveAuthorizedStorageKeyForRead(Request $request, string $relativeRaw): array
+    {
+        $relativeRaw = trim($relativeRaw);
+        if ($relativeRaw === '') {
+            return ['key' => null, 'error' => 'empty'];
+        }
+
+        $userSeg = $this->userStorageDirSegment($request->authUser);
+        $policy = new UploadPolicyService();
+
+        $candidates = [];
+        $k1 = $this->normalizeStoragePathForKey($relativeRaw);
+        if ($k1 !== null) {
+            $candidates[] = $k1;
+        }
+        $k2 = $this->normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
+        if ($k2 !== null && !in_array($k2, $candidates, true)) {
+            $candidates[] = $k2;
+        }
+
+        if ($candidates === []) {
+            return ['key' => null, 'error' => 'invalid'];
+        }
+
+        foreach ($candidates as $k) {
+            if ($policy->userOwnsStoragePath($request->authUser, $k)) {
+                return ['key' => $k, 'error' => null];
+            }
+        }
+
+        return ['key' => null, 'error' => 'forbidden'];
+    }
+
+    /**
      * 校验并规范化 storage 下的相对子目录，禁止路径穿越。
-     * 规范化后的相对路径（使用 /），空字符串表示 storage 根目录；非法时返回 null。
+     * 规范化后的相对路径（使用 /），空字符串表示未填写（上传时会替换为当日 Ymd）；非法时返回 null。
      * @return string|null
      */
     private function sanitizeStorageSubdir(string $raw): ?string

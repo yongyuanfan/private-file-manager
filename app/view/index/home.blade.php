@@ -54,8 +54,8 @@
 
         <div class="upload-options">
             <label class="field-label" for="upload-subdir">存储子目录（可选）</label>
-            <input type="text" id="upload-subdir" class="field-input" name="subdir" placeholder="例如：images 或 images/2025" autocomplete="off" spellcheck="false">
-            <p class="field-hint">相对项目 <code>storage</code> 目录，仅字母、数字、下划线、连字符，多级用 <code>/</code> 分隔；上传后文件名为 UUID（保留扩展名）。</p>
+            <input type="text" id="upload-subdir" class="field-input" name="subdir" placeholder="留空则使用当日日期，如：images 或 images/2025" autocomplete="off" spellcheck="false">
+            <p class="field-hint">文件保存在 <code>storage</code> 下以您邮箱命名的目录内；此处为相对该目录的子路径，留空时默认使用当日 <code>Ymd</code>（如 <code>20260324</code>）。仅字母、数字、下划线、连字符，多级用 <code>/</code> 分隔；文件名为 UUID（保留扩展名）。</p>
         </div>
 
         <div class="toolbar">
