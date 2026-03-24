@@ -345,6 +345,9 @@ button.site-header__dropdown-item:hover {
   border: 1px solid var(--border);
   background: var(--btn-ghost-bg);
   gap: 2px;
+  position: absolute;
+  top: 15px;
+  right: 15px;
 }
 
 .theme-switcher button {
