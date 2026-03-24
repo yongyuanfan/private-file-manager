@@ -26,6 +26,7 @@ class AuthController
         return view('auth/login', [
             'next' => $this->sanitizeNext((string) $request->get('next', '')),
             'error' => (string) $request->get('error', ''),
+            'registration_open' => $this->isRegistrationOpen(),
         ]);
     }
 
@@ -73,6 +74,10 @@ class AuthController
     #[MiddlewareAttr(GuestOnly::class)]
     public function showRegister(): Response
     {
+        if (!$this->isRegistrationOpen()) {
+            return redirect($this->registrationClosedLoginUrl());
+        }
+
         return view('auth/register', [
             'error' => '',
         ]);
@@ -83,6 +88,10 @@ class AuthController
     {
         if ($request->authUser !== null) {
             return redirect('/home');
+        }
+
+        if (!$this->isRegistrationOpen()) {
+            return redirect($this->registrationClosedLoginUrl());
         }
 
         $email = strtolower(trim((string) $request->post('email', '')));
@@ -161,6 +170,16 @@ class AuthController
         }
 
         return '/login?' . $q;
+    }
+
+    private function isRegistrationOpen(): bool
+    {
+        return (bool) config('app.registration_open', true);
+    }
+
+    private function registrationClosedLoginUrl(): string
+    {
+        return '/login?error=' . rawurlencode('注册已关闭');
     }
 
     private function syncExpiredPlan(User $user): void

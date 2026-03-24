@@ -40,7 +40,9 @@
             </div>
             <div class="auth-actions">
                 <button type="submit" class="btn btn-primary">登录</button>
-                <a href="/register">没有账号？注册</a>
+                @if($registration_open ?? true)
+                    <a href="/register">没有账号？注册</a>
+                @endif
             </div>
         </form>
     </div>
