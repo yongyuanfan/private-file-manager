@@ -56,7 +56,7 @@ class UserController
 
         $recentModels = $q()
             ->orderByDesc('created_at')
-            ->limit(25)
+            ->limit(10)
             ->get();
 
         $policy = new UploadPolicyService();
