@@ -461,6 +461,27 @@ button.fm-share-menu__item:hover {
   font-size: 0.95rem;
 }
 
+.fm-share-create__expires-input {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 分享创建页：移动端日期时间面板贴底，避免被虚拟键盘挡住（输入框已 readonly + inputmode=none） */
+@media (max-width: 639px) {
+  body.fm-share-datetimepicker-open .xdsoft_datetimepicker {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
+    max-width: calc(100vw - 20px);
+    z-index: 100050 !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18);
+  }
+}
+
 .fm-share-create__actions {
   display: flex;
   gap: 10px;

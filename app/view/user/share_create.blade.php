@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="/css/pages/home-upload.css">
     <link rel="stylesheet" href="/css/pages/user-center.css">
     <link rel="stylesheet" href="/css/pages/user-files.css">
+    <link rel="stylesheet" href="/css/vendor/jquery.datetimepicker.min.css">
 </head>
 <body>
 @include('partials.site-header', [
@@ -54,9 +55,15 @@
                     <label for="fm-share-max-views">最大查看次数（留空不限）</label>
                     <input type="number" name="max_views" id="fm-share-max-views" min="1" max="999999" placeholder="例如 10" value="{{ $fieldValues['max_views'] }}">
                 </div>
+                @php
+                    $expiresAtDisplay = trim((string) ($fieldValues['expires_at'] ?? ''));
+                    if ($expiresAtDisplay !== '') {
+                        $expiresAtDisplay = str_replace('T', ' ', $expiresAtDisplay);
+                    }
+                @endphp
                 <div class="fm-share-create__field">
                     <label for="fm-share-expires">过期时间（留空不过期）</label>
-                    <input type="datetime-local" name="expires_at" id="fm-share-expires" value="{{ $fieldValues['expires_at'] }}">
+                    <input type="text" name="expires_at" id="fm-share-expires" class="fm-share-create__expires-input" value="{{ $expiresAtDisplay }}" autocomplete="off" inputmode="none" readonly placeholder="点击选择日期时间">
                 </div>
                 <div class="fm-share-create__field">
                     <label for="fm-share-password">访问密码（留空则公开，至少 4 位）</label>
@@ -71,6 +78,9 @@
     </div>
 </div>
 
+<script src="/js/vendor/jquery.min.js"></script>
+<script src="/js/vendor/jquery.datetimepicker.full.min.js"></script>
+<script src="/js/pages/share-create.js"></script>
 <script src="/js/pages/home-theme.js"></script>
 </body>
 </html>
