@@ -4,8 +4,8 @@ return  [
     'connections' => [
         'mysql' => [
             'driver'      => 'mysql',
-            'host'        => '127.0.0.1',
-            'port'        => '3306',
+            'host'        => getenv('MYSQL_HOST') ?: '127.0.0.1',
+            'port'        => getenv('MYSQL_PORT') ?: '3306',
             'database'    => 'private-file-manager',
             'username'    => 'root',
             'password'    => '123456',
