@@ -1,70 +1,87 @@
-<div style="padding:18px;max-width: 1024px;margin:0 auto;background-color:#fff;color:#333">
-<h1>webman</h1>
+# Xinkin OSS
 
-基于<a href="https://www.workerman.net" target="__blank">workerman</a>开发的超高性能PHP框架
+基于 [webman](https://www.workerman.net/webman)（Workerman）的轻量对象存储与用户文件管理 Web 应用：支持登录注册、文件上传与配额、外链分享（可选访问密码）及分享管理。
 
+## 功能概览
 
-<h1>学习</h1>
+- **用户与认证**：登录、登出；注册（可在 `config/app.php` 中通过 `registration_open` 关闭）
+- **文件**：上传至 `storage/{用户目录}/`，可按子目录组织；单文件与总用量受会员方案限制
+- **访问**：已登录用户可浏览 `/user/files`，通过受控接口读取文件或图片
+- **分享**：创建带 token 的外链、`/share/{token}` 落地页、可选密码解锁；分享列表、撤销与访问审计
 
-<ul>
-  <li>
-    <a href="https://www.workerman.net/webman" target="__blank">主页 / Home page</a>
-  </li>
-  <li>
-    <a href="https://webman.workerman.net" target="__blank">文档 / Document</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/doc/webman/install.html" target="__blank">安装 / Install</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/questions" target="__blank">问答 / Questions</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/apps" target="__blank">市场 / Apps</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/sponsor" target="__blank">赞助 / Sponsors</a>
-  </li>
-  <li>
-    <a href="https://www.workerman.net/doc/webman/thanks.html" target="__blank">致谢 / Thanks</a>
-  </li>
-</ul>
+## 技术栈
 
-<div style="float:left;padding-bottom:30px;">
+- PHP ≥ 8.1
+- [webman-framework](https://github.com/walkor/webman) 2.x
+- MySQL（[webman/database](https://www.workerman.net/doc/webman/db.html)）
+- Redis（[webman/redis](https://www.workerman.net/doc/webman/redis.html)）
+- Blade 模板（[webman/blade](https://www.workerman.net/doc/webman/view.html)）
+- 路由：控制器上的 `#[Route]` 注解
 
-  <h1>赞助商</h1>
+## 环境要求
 
-  <h4>特别赞助</h4>
-  <a href="https://www.crmeb.com/?form=workerman" target="__blank">
-    <img src="https://www.workerman.net/img/sponsors/6429/20230719111500.svg" width="200">
-  </a>
+- PHP 8.1+，建议开启常用扩展（`pdo_mysql`、`json`、`mbstring` 等）
+- MySQL 5.7+ / 8.x
+- Redis（若项目或会话依赖 Redis，请按 `config/redis.php` 配置）
+- [Composer](https://getcomposer.org/)
 
-  <h4>铂金赞助</h4>
-  <a href="https://www.fadetask.com/?from=workerman" target="__blank"><img src="https://www.workerman.net/img/sponsors/1/20230719084316.png" width="200"></a>
-  <a href="https://www.yilianyun.net/?from=workerman" target="__blank" style="margin-left:20px;"><img src="https://www.workerman.net/img/sponsors/6218/20230720114049.png" width="200"></a>
+## 安装与配置
 
+1. **安装依赖**
 
-</div>
+   ```bash
+   composer install
+   ```
 
+2. **数据库**  
+   在 MySQL 中创建库并导入表结构（请根据团队提供的 SQL 或迁移脚本执行；仓库若未附带迁移文件，需与维护者确认建表方式）。
 
-<div style="float:left;padding-bottom:30px;clear:both">
+3. **修改配置**
 
-  <h1>请作者喝咖啡</h1>
+   - `config/database.php`：填写数据库连接信息。  
+   - `config/redis.php`：按环境修改 Redis 地址与密码。  
+   - `config/app.php`：  
+     - `site_name`：站点名称  
+     - `registration_open`：是否开放自助注册  
+     - `share_link_secret`：**生产环境务必改为随机长字符串**，用于分享外链 Cookie 签名  
+     - `debug`：生产环境建议设为 `false`
 
-<img src="https://www.workerman.net/img/wx_donate.png" width="200">
-<img src="https://www.workerman.net/img/ali_donate.png" width="200">
-<br>
-<b>如果您觉得webman对您有所帮助，欢迎捐赠。</b>
+4. **可选：`.env`**  
+   若使用环境变量覆盖配置，可在项目根目录放置 `.env`（webman 会在启动时加载）。
 
+## 启动与访问
 
-</div>
+- **Linux / macOS**
 
+  ```bash
+  php start.php start
+  ```
 
-<div style="clear: both">
-<h1>LICENSE</h1>
-The webman is open-sourced software licensed under the MIT.
-</div>
+- **Windows**  
+  使用项目根目录下的 `windows.php` 启动（参见 [webman Windows 文档](https://www.workerman.net/doc/webman/windows.html)）。
 
-</div>
+默认 HTTP 监听地址见 `config/process.php` 中 `webman.listen`（常见为 `http://0.0.0.0:8787`）。启动后在浏览器中访问该地址即可。
 
+常用进程命令：`start` | `stop` | `restart` | `reload` | `status`。
 
+## 目录说明（简要）
+
+| 路径 | 说明 |
+|------|------|
+| `app/controller/` | 控制器与路由注解 |
+| `app/model/` | 数据模型 |
+| `app/service/` | 业务服务（上传策略、存储、分享等） |
+| `app/middleware/` | 中间件（登录校验、访客限制等） |
+| `app/view/` | Blade 视图 |
+| `public/` | 静态资源（CSS/JS 等） |
+| `storage/` | 用户上传文件存储根目录 |
+| `config/` | 应用与框架配置 |
+
+## 相关文档
+
+- [webman 官方文档](https://webman.workerman.net)
+- [webman 安装说明](https://www.workerman.net/doc/webman/install.html)
+
+## 许可证
+
+本项目依赖的 webman 及相关组件遵循各自开源协议；仓库根目录 `LICENSE` 为 webman 原始 MIT 许可证文本。若你对本仓库另有版权声明，请在 `LICENSE` 或文档中补充说明。
