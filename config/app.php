@@ -18,7 +18,7 @@ return [
     /**
      * 前台页面顶部展示的网站名称
      */
-    'site_name' => 'Xinkin OSS',
+    'site_name' => '私有文件管理',
     /**
      * 是否开放用户自助注册；为 false 时访问 /register 会跳转登录页并提示「注册已关闭」
      */
