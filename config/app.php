@@ -22,7 +22,7 @@ return [
     /**
      * 是否开放用户自助注册；为 false 时访问 /register 会跳转登录页并提示「注册已关闭」
      */
-    'registration_open' => false,
+    'registration_open' => true,
     /**
      * 外链访问密码 Cookie 签名密钥。
      */

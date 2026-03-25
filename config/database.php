@@ -4,11 +4,11 @@ return  [
     'connections' => [
         'mysql' => [
             'driver'      => 'mysql',
-            'host'        => '192.168.2.166',
+            'host'        => '127.0.0.1',
             'port'        => '3306',
-            'database'    => 'xinkin-oss',
+            'database'    => 'private-file-manager',
             'username'    => 'root',
-            'password'    => 'Xinkin20230813',
+            'password'    => '123456',
             'charset'     => 'utf8mb4',
             'collation'   => 'utf8mb4_unicode_ci',
             'prefix'      => '',
