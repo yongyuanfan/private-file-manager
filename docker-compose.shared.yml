@@ -1,0 +1,20 @@
+networks:
+  shared_net:
+    external: true
+
+services:
+  webman:
+    build: .
+    container_name: docker-webman
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    volumes:
+      - storage:/app/storage
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    networks:
+      - shared_net
