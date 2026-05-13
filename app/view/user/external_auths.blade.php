@@ -69,13 +69,14 @@
                 <span class="fm-shares-table__val">该值只展示一次，请立即保存到第三方系统配置中。</span>
             </div>
             <div style="border:1px solid rgba(127,127,127,.22); border-radius:12px; padding:12px; background:rgba(127,127,127,.06);">
-                <p class="fm-shares-table__val" style="margin:0 0 8px 0; text-align:left;">调用示例</p>
+                <p class="fm-shares-table__val" style="margin:0 0 8px 0; text-align:left;">调用示例（单次最多 4 个文件）</p>
                 @php
                     $serverUrl = (string) config('app.server_url', '');
                     $uploadEndpoint = rtrim($serverUrl !== '' ? $serverUrl : request()->host(true), '/') . '/api/external/upload';
                     $curlExample = 'curl -X POST "' . $uploadEndpoint . '" \\' . "\n"
                         . '  -H "Authorization: Bearer ' . $createdToken . '" \\' . "\n"
-                        . '  -F "file=@/path/to/demo.pdf" \\' . "\n"
+                        . '  -F "files[]=@/path/to/demo-1.pdf" \\' . "\n"
+                        . '  -F "files[]=@/path/to/demo-2.png" \\' . "\n"
                         . '  -F "subdir=external/demo"';
                 @endphp
                 <pre style="margin:0 0 10px 0; white-space:pre-wrap; word-break:break-all;"><code>{{ $curlExample }}</code></pre>

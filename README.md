@@ -173,7 +173,8 @@ VALUES
 
 请求参数：
 
-- `file`：必填，上传文件
+- `file`：可选，单文件上传字段
+- `files[]`：可选，多文件上传字段；单次最多 4 个文件
 - `subdir`：可选，上传子目录；未传时优先用授权默认目录，否则自动落到当天日期目录
 
 `curl` 示例：
@@ -181,7 +182,8 @@ VALUES
 ```bash
 curl -X POST "http://127.0.0.1:8787/api/external/upload" \
   -H "Authorization: Bearer <明文token>" \
-  -F "file=@/path/to/demo.pdf" \
+  -F "files[]=@/path/to/demo-1.pdf" \
+  -F "files[]=@/path/to/demo-2.png" \
   -F "subdir=contracts/2026"
 ```
 
@@ -192,11 +194,30 @@ curl -X POST "http://127.0.0.1:8787/api/external/upload" \
   "code": 0,
   "msg": "ok",
   "data": {
-    "upload_id": 123,
-    "saved_as": "1a2b3c4d-xxxx.pdf",
-    "relative_path": "demo_at_qq.com/contracts/2026/1a2b3c4d-xxxx.pdf",
-    "view_url": "/file?path=contracts%2F2026%2F1a2b3c4d-xxxx.pdf",
-    "expires_at": "2026-06-12 09:30:00"
+    "items": [
+      {
+        "name": "demo-1.pdf",
+        "ok": true,
+        "code": 0,
+        "msg": "ok",
+        "upload_id": 123,
+        "saved_as": "1a2b3c4d-xxxx.pdf",
+        "relative_path": "demo_at_qq.com/contracts/2026/1a2b3c4d-xxxx.pdf",
+        "view_url": "/file?path=contracts%2F2026%2F1a2b3c4d-xxxx.pdf",
+        "expires_at": "2026-06-12 09:30:00"
+      },
+      {
+        "name": "demo-2.png",
+        "ok": false,
+        "code": 6,
+        "msg": "该扩展名不在当前会员允许列表内"
+      }
+    ],
+    "summary": {
+      "total": 2,
+      "success": 1,
+      "failed": 1
+    }
   }
 }
 ```
@@ -205,9 +226,13 @@ curl -X POST "http://127.0.0.1:8787/api/external/upload" \
 
 - `401`：授权无效或未提供 Bearer Token
 - `403`：授权已禁用或撤销
-- `400`：文件缺失、目录非法、上传不完整
-- `422`：超过用户会员上传限制或类型不允许
-- `500`：创建 retention 失败；此时上传记录与文件会被回滚/删除
+- `400`：文件缺失、超过 4 个文件
+- `200`：已进入批量处理；单个文件的成功或失败请看 `data.items[].ok/code/msg`
+
+说明：
+
+- 当 `subdir` 非法、文件大小超限、扩展名不允许、文件上传不完整、retention 创建失败时，不会中断整批请求，而是写入对应文件的 `items[]` 结果。
+- 只要至少有一个文件上传成功，授权的 `last_used_at` 就会更新一次。
 
 ### 3. 文件有效期行为
 
