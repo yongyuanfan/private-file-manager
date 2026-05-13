@@ -6,16 +6,14 @@ networks:
 
 services:
   private-file-manager:
-    build: .
+    image: yongyuanfan/php:8.4.4
     container_name: private-file-manager
     restart: unless-stopped
     ports:
       - "8787:8787"
     volumes:
-      - ./bin/php:/usr/local/bin/php
-      - ./bin/composer:/usr/local/bin/composer
       - .:/app
-      - ./storage:/app/storage
     networks:
       - private_file_manager_network
       - shared_network
+    command: ["./private-file-manager"]
