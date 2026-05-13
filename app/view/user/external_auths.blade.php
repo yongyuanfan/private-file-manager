@@ -44,6 +44,12 @@
     @if(!empty($flashDisabled))
         <p class="uc-flash uc-flash--ok" role="status">授权已禁用。</p>
     @endif
+    @if(!empty($flashEnabled))
+        <p class="uc-flash uc-flash--ok" role="status">授权已重新启用。</p>
+    @endif
+    @if(!empty($flashDeleted))
+        <p class="uc-flash uc-flash--ok" role="status">授权已删除。</p>
+    @endif
     @if(!empty($errorMessage))
         <p class="uc-flash uc-flash--err" role="alert">{{ $errorMessage }}</p>
     @endif
@@ -112,11 +118,25 @@
                                 </td>
                                 <td class="uc-table__narrow fm-share-actions" data-label="操作">
                                     @if(!$it['disabled'])
-                                        <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
-                                            <button type="submit" class="btn btn-ghost btn-sm">禁用</button>
-                                        </form>
+                                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
+                                                <button type="submit" class="btn btn-ghost btn-sm">禁用</button>
+                                            </form>
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}" onsubmit="return confirm('确定删除该授权？删除后无法恢复，第三方将立即失效。');">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-ghost btn-sm">删除</button>
+                                            </form>
+                                        </div>
                                     @else
-                                        <span class="fm-shares-table__val">—</span>
+                                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/enable">
+                                                <button type="submit" class="btn btn-ghost btn-sm">启用</button>
+                                            </form>
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}" onsubmit="return confirm('确定删除该授权？删除后无法恢复。');">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-ghost btn-sm">删除</button>
+                                            </form>
+                                        </div>
                                     @endif
                                 </td>
                             </tr>

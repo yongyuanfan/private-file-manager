@@ -50,6 +50,8 @@ class ExternalUploadAuthController
             'items' => $items,
             'flashCreated' => (string) $request->get('created', '') === '1',
             'flashDisabled' => (string) $request->get('disabled', '') === '1',
+            'flashEnabled' => (string) $request->get('enabled', '') === '1',
+            'flashDeleted' => (string) $request->get('deleted', '') === '1',
             'createdToken' => trim((string) $request->get('token', '')),
             'errorMessage' => (string) $request->get('err', ''),
         ]);
@@ -110,5 +112,54 @@ class ExternalUploadAuthController
         }
 
         return redirect('/user/external-auths?disabled=1');
+    }
+
+    #[Route('/user/external-auths/{id}/enable', 'POST')]
+    public function enable(Request $request, string $id): Response
+    {
+        $user = $request->authUser;
+        $auth = UserExternalUploadAuth::query()
+            ->where('id', (int) $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($auth === null) {
+            return redirect('/user/external-auths?err=' . rawurlencode('授权不存在或无权操作'));
+        }
+
+        if ($auth->status !== 'active') {
+            $auth->status = 'active';
+            $auth->revoked_at = null;
+            $auth->save();
+        }
+
+        return redirect('/user/external-auths?enabled=1');
+    }
+
+    #[Route('/user/external-auths/{id}', 'POST')]
+    public function delete(Request $request, string $id): Response
+    {
+        $user = $request->authUser;
+        $method = strtoupper(trim((string) $request->post('_method', '')));
+        if ($method !== 'DELETE') {
+            return redirect('/user/external-auths?err=' . rawurlencode('不支持的请求方式'));
+        }
+
+        $auth = UserExternalUploadAuth::query()
+            ->where('id', (int) $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($auth === null) {
+            return redirect('/user/external-auths?err=' . rawurlencode('授权不存在或无权操作'));
+        }
+
+        try {
+            $auth->delete();
+        } catch (Throwable) {
+            return redirect('/user/external-auths?err=' . rawurlencode('删除授权失败，请稍后重试'));
+        }
+
+        return redirect('/user/external-auths?deleted=1');
     }
 }
