@@ -1,20 +1,20 @@
 networks:
-  shared_net:
+  private_file_manager_network:
+    driver: bridge
+  shared_network:
     external: true
 
 services:
-  webman:
+  private-file-manager:
     build: .
-    container_name: docker-webman
+    container_name: private-file-manager
     restart: unless-stopped
     ports:
       - "8787:8787"
     volumes:
+      - bin/php:/usr/local/bin/php
+      - bin/composer:/usr/local/bin/composer
       - storage:/app/storage
-    environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: "3306"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
     networks:
-      - shared_net
+      - private_file_manager_network
+      - shared_network
