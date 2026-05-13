@@ -1,31 +1,26 @@
-version: "3.8"
+networks:
+  private-file-manager-network:
+    driver: bridge
 
 services:
-  webman:
-    build: .
-    container_name: docker-webman
+  private-file-manager:
+    image: yongyuanfan/workerman-php:8.4.4
+    container_name: private-file-manager
     restart: unless-stopped
     volumes:
-      - "./:/app"
+      - ./:/app
     ports:
       - "8787:8787"
-    command: ["./php", "start.php", "start"]
-    environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: "3306"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
+    command: ["./private-file-manager"]
     depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
+       - mysql
+       - redis
     networks:
       - private-file-manager-network
 
   mysql:
     image: mysql:8.0
-    container_name: docker-mysql
+    container_name: mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: "123456"
@@ -35,22 +30,12 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command:
-      - --default-authentication-plugin=mysql_native_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     networks:
       - private-file-manager-network
 
   redis:
     image: redis:7-alpine
-    container_name: docker-redis
+    container_name: redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -62,7 +47,3 @@ services:
 volumes:
   mysql_data:
   redis_data:
-
-networks:
-  private-file-manager-network:
-    driver: bridge
