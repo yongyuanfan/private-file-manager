@@ -77,16 +77,19 @@
 
 3. **修改配置**
 
-   - `config/database.php`：填写数据库连接信息。  
-   - `config/redis.php`：按环境修改 Redis 地址与密码。  
-   - `config/app.php`：  
-     - `site_name`：站点名称  
-     - `registration_open`：是否开放自助注册  
-     - `share_link_secret`：**生产环境务必改为随机长字符串**，用于分享外链 Cookie 签名  
-     - `debug`：生产环境建议设为 `false`
+   推荐复制根目录 `.env.example` 为 `.env`，再按环境修改。当前支持的主要配置项如下：
 
-4. **可选：`.env`**  
-   若使用环境变量覆盖配置，可在项目根目录放置 `.env`（webman 会在启动时加载）。
+   - `APP_DEBUG`：是否开启调试；生产环境建议设为 `false`
+   - `APP_TIMEZONE`：应用时区，默认 `Asia/Shanghai`
+   - `APP_SITE_NAME`：站点名称
+   - `APP_REGISTRATION_OPEN`：是否开放自助注册
+   - `APP_SHARE_LINK_SECRET`：**生产环境务必改为随机长字符串**，用于分享外链 Cookie 签名
+   - `APP_SERVER_URL`：对外访问本站的完整基础地址，用于生成完整文件 URL
+   - `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_DATABASE` / `MYSQL_USERNAME` / `MYSQL_PASSWORD`：MySQL 连接配置
+   - `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_DATABASE`：Redis 连接配置
+
+4. **`.env`**  
+   webman 会在启动时加载项目根目录 `.env`，未配置的项会回退到 `config/*.php` 中的默认值。
 
 5. **升级第三方上传能力（已有库）**
 

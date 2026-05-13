@@ -15,9 +15,9 @@
 use support\Request;
 
 return [
-    'debug' => false,
+    'debug' => filter_var(getenv('APP_DEBUG') ?: false, FILTER_VALIDATE_BOOL),
     'error_reporting' => E_ALL,
-    'default_timezone' => 'Asia/Shanghai',
+    'default_timezone' => getenv('APP_TIMEZONE') ?: 'Asia/Shanghai',
     'request_class' => Request::class,
     'public_path' => base_path() . DIRECTORY_SEPARATOR . 'public',
     'runtime_path' => base_path(false) . DIRECTORY_SEPARATOR . 'runtime',
@@ -26,15 +26,15 @@ return [
     /**
      * 前台页面顶部展示的网站名称
      */
-    'site_name' => '私有文件管理',
+    'site_name' => getenv('APP_SITE_NAME') ?: '私有文件管理',
     /**
      * 是否开放用户自助注册；为 false 时访问 /register 会跳转登录页并提示「注册已关闭」
      */
-    'registration_open' => false,
+    'registration_open' => filter_var(getenv('APP_REGISTRATION_OPEN') ?: false, FILTER_VALIDATE_BOOL),
     /**
      * 外链访问密码 Cookie 签名密钥。
      */
-    'share_link_secret' => 'change-me-share-link-secret',
+    'share_link_secret' => getenv('APP_SHARE_LINK_SECRET') ?: 'change-me-share-link-secret',
     /**
      * 对外访问本站的完整基础地址，用于生成上传后返回的完整文件 URL。
      */
