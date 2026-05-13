@@ -1,9 +1,13 @@
 FROM alpine:3.22.4
 
-ADD . /app
+COPY . /app
 
 WORKDIR /app
 
-EXPOSE 8787
+RUN mv ./bin/* /usr/local/bin/
 
-ENTRYPOINT ["./bin/php", "start.php", "start"]
+# RUN composer config -g repo.packagist composer https://packagist.phpcomposer.com
+
+RUN composer install --no-dev --optimize-autoloader
+
+ENTRYPOINT ["php", "start.php", "start"]
