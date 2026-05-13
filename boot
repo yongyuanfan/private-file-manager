@@ -1,4 +1,4 @@
-#! /user/local/bin/bash
+#!/bin/sh
 
 # 进入项目目录
 cd /app
@@ -13,5 +13,8 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
 fi
 
-# 启动服务
-php start.php start
+# 启动服务，以守护进程方式运行
+php start.php start -d
+
+# 保持容器运行
+tail -f /dev/null
