@@ -9,6 +9,11 @@ use support\Request;
 
 class ExternalUploadAuthService
 {
+    public function generatePlainToken(): string
+    {
+        return bin2hex(random_bytes(32));
+    }
+
     public function resolveFromRequest(Request $request): ?UserExternalUploadAuth
     {
         $header = trim((string) $request->header('authorization', ''));
@@ -30,6 +35,30 @@ class ExternalUploadAuthService
     public function hashToken(string $rawToken): string
     {
         return hash('sha256', $rawToken);
+    }
+
+    public function createForUser(User $user, string $name, string $defaultSubdir, ?int $retentionTtlDays): array
+    {
+        $policy = new UploadPolicyService();
+        $subdir = $policy->sanitizeRelativeSubdir($defaultSubdir);
+        if ($subdir === null) {
+            throw new \InvalidArgumentException('默认子目录不合法');
+        }
+
+        $plainToken = $this->generatePlainToken();
+        $auth = UserExternalUploadAuth::query()->create([
+            'user_id' => $user->id,
+            'name' => $name,
+            'token_hash' => $this->hashToken($plainToken),
+            'status' => 'active',
+            'default_subdir' => $subdir !== '' ? $subdir : null,
+            'retention_ttl_days' => $retentionTtlDays,
+            'created_at' => Carbon::now(),
+            'last_used_at' => null,
+            'revoked_at' => null,
+        ]);
+
+        return ['auth' => $auth, 'plain_token' => $plainToken];
     }
 
     public function validateAuthorization(?UserExternalUploadAuth $auth): ?string

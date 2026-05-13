@@ -23,14 +23,22 @@
                         @elseif(($headerNav ?? '') === 'user_center')
                             <a href="/user/files" class="site-header__dropdown-item">文件管理</a>
                             <a href="/user/shares" class="site-header__dropdown-item">分享管理</a>
+                            <a href="/user/external-auths" class="site-header__dropdown-item">第三方授权</a>
                             <a href="/home" class="site-header__dropdown-item">上传文件</a>
                         @elseif(($headerNav ?? '') === 'user_files')
                             <a href="/user" class="site-header__dropdown-item">用户中心</a>
                             <a href="/user/shares" class="site-header__dropdown-item">分享管理</a>
+                            <a href="/user/external-auths" class="site-header__dropdown-item">第三方授权</a>
                             <a href="/home" class="site-header__dropdown-item">上传文件</a>
                         @elseif(($headerNav ?? '') === 'user_shares')
                             <a href="/user" class="site-header__dropdown-item">用户中心</a>
                             <a href="/user/files" class="site-header__dropdown-item">文件管理</a>
+                            <a href="/user/external-auths" class="site-header__dropdown-item">第三方授权</a>
+                            <a href="/home" class="site-header__dropdown-item">上传文件</a>
+                        @elseif(($headerNav ?? '') === 'user_external_auths')
+                            <a href="/user" class="site-header__dropdown-item">用户中心</a>
+                            <a href="/user/files" class="site-header__dropdown-item">文件管理</a>
+                            <a href="/user/shares" class="site-header__dropdown-item">分享管理</a>
                             <a href="/home" class="site-header__dropdown-item">上传文件</a>
                         @endif
                         <div class="site-header__dropdown-sep" aria-hidden="true"></div>
