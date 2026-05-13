@@ -5,6 +5,7 @@ cd /app
 
 # 判断vendor目录是否存在，不存在则执行composer安装依赖
 if [ ! -d "vendor" ]; then
+    composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
     composer install --no-dev --optimize-autoloader
 fi
 
