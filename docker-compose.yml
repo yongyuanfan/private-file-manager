@@ -9,7 +9,7 @@ services:
       - "./:/app"
     ports:
       - "8787:8787"
-    command: ["php", "start.php", "start"]
+    command: ["./php", "start.php", "start"]
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: "3306"
