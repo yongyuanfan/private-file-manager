@@ -100,6 +100,32 @@ BEGIN;
 COMMIT;
 
 -- ----------------------------
+-- Table structure for external_upload_auth_access_logs
+-- ----------------------------
+DROP TABLE IF EXISTS `external_upload_auth_access_logs`;
+CREATE TABLE `external_upload_auth_access_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `external_upload_auth_id` bigint(20) unsigned NOT NULL,
+  `user_upload_id` bigint(20) unsigned DEFAULT NULL,
+  `action` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `detail` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_eual_auth_created` (`external_upload_auth_id`,`created_at`),
+  KEY `idx_eual_upload` (`user_upload_id`),
+  CONSTRAINT `fk_eual_auth` FOREIGN KEY (`external_upload_auth_id`) REFERENCES `user_external_upload_auths` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_eual_upload` FOREIGN KEY (`user_upload_id`) REFERENCES `user_uploads` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='第三方上传授权审计日志';
+
+-- ----------------------------
+-- Records of external_upload_auth_access_logs
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
 -- Table structure for membership_plan_extensions
 -- ----------------------------
 DROP TABLE IF EXISTS `membership_plan_extensions`;

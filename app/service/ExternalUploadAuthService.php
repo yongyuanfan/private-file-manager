@@ -2,8 +2,10 @@
 
 namespace app\service;
 
+use app\model\ExternalUploadAuthAccessLog;
 use app\model\User;
 use app\model\UserExternalUploadAuth;
+use app\model\UserUpload;
 use Carbon\Carbon;
 use support\Request;
 
@@ -145,5 +147,31 @@ class ExternalUploadAuthService
     public function user(UserExternalUploadAuth $auth): User
     {
         return $auth->user;
+    }
+
+    public function log(?UserExternalUploadAuth $auth, string $action, ?string $detail, Request $request, ?UserUpload $upload = null): void
+    {
+        if ($auth === null) {
+            return;
+        }
+
+        $ip = $request->connection?->getRemoteIp() ?? '';
+        $ip = substr((string) $ip, 0, 45);
+        $ua = (string) $request->header('user-agent', '');
+        $ua = substr($ua, 0, 512);
+
+        try {
+            ExternalUploadAuthAccessLog::query()->create([
+                'external_upload_auth_id' => (int) $auth->id,
+                'user_upload_id' => $upload?->id,
+                'action' => $action,
+                'detail' => $detail,
+                'ip' => $ip !== '' ? $ip : null,
+                'user_agent' => $ua !== '' ? $ua : null,
+                'created_at' => Carbon::now(),
+            ]);
+        } catch (\Throwable) {
+            // 审计失败不阻断主流程
+        }
     }
 }

@@ -24,6 +24,22 @@ CREATE TABLE IF NOT EXISTS `user_external_upload_auths` (
   CONSTRAINT `fk_external_auth_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='第三方上传授权';
 
+CREATE TABLE IF NOT EXISTS `external_upload_auth_access_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `external_upload_auth_id` bigint(20) unsigned NOT NULL,
+  `user_upload_id` bigint(20) unsigned DEFAULT NULL,
+  `action` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `detail` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_eual_auth_created` (`external_upload_auth_id`,`created_at`),
+  KEY `idx_eual_upload` (`user_upload_id`),
+  CONSTRAINT `fk_eual_auth` FOREIGN KEY (`external_upload_auth_id`) REFERENCES `user_external_upload_auths` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_eual_upload` FOREIGN KEY (`user_upload_id`) REFERENCES `user_uploads` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='第三方上传授权审计日志';
+
 -- 示例：为用户 id=1 创建一个永久有效授权（请先替换 token_hash）
 -- INSERT INTO `user_external_upload_auths`
 -- (`user_id`, `name`, `token_hash`, `status`, `default_subdir`, `retention_ttl_days`, `created_at`)

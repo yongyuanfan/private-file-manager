@@ -137,6 +137,7 @@
                                 <td class="uc-table__narrow fm-share-actions" data-label="操作">
                                     @if(!$it['disabled'])
                                         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                                            <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
                                             <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
                                                 <button type="submit" class="btn btn-ghost btn-sm">禁用</button>
                                             </form>
@@ -147,6 +148,7 @@
                                         </div>
                                     @else
                                         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                                            <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
                                             <form method="post" action="/user/external-auths/{{ $it['id'] }}/enable">
                                                 <button type="submit" class="btn btn-ghost btn-sm">启用</button>
                                             </form>

@@ -218,6 +218,15 @@ curl -X POST "http://127.0.0.1:8787/api/external/upload" \
   - `/share/{token}/file`
 - 历史普通上传文件没有 `retention` 记录时，仍按旧逻辑允许访问
 
+### 4. 授权审计
+
+- `/user/external-auths` 列表中可查看单个授权的审计记录
+- 当前会记录：
+  - 上传成功 `upload_success`
+  - 缺少文件、授权被禁用、策略拒绝等失败场景 `upload_denied`
+  - retention 创建失败 `upload_failed`
+- 审计内容包含：时间、动作、详情、上传记录 ID、IP、User-Agent
+
 ## 相关文档
 
 - [webman 官方文档](https://webman.workerman.net)

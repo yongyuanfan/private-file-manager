@@ -3,6 +3,7 @@
 namespace app\controller;
 
 use app\middleware\RequireLogin;
+use app\model\ExternalUploadAuthAccessLog;
 use app\model\UserExternalUploadAuth;
 use app\service\ExternalUploadAuthService;
 use support\annotation\Middleware;
@@ -182,5 +183,48 @@ class ExternalUploadAuthController
         }
 
         return redirect('/user/external-auths?deleted=1');
+    }
+
+    #[Route('/user/external-auths/{id}/audit', 'GET')]
+    public function audit(Request $request, string $id): Response
+    {
+        $user = $request->authUser;
+        $auth = UserExternalUploadAuth::query()
+            ->where('id', (int) $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($auth === null) {
+            return redirect('/user/external-auths?err=' . rawurlencode('授权不存在或无权操作'));
+        }
+
+        $logs = ExternalUploadAuthAccessLog::query()
+            ->where('external_upload_auth_id', (int) $auth->id)
+            ->orderByDesc('id')
+            ->limit(300)
+            ->get();
+
+        $rows = [];
+        foreach ($logs as $log) {
+            $rows[] = [
+                'action' => (string) $log->action,
+                'detail' => $log->detail !== null ? (string) $log->detail : '—',
+                'upload_id' => $log->user_upload_id !== null ? (string) $log->user_upload_id : '—',
+                'ip' => $log->ip !== null ? (string) $log->ip : '—',
+                'ua' => $log->user_agent !== null ? (string) $log->user_agent : '—',
+                'time' => $log->created_at !== null ? $log->created_at->format('Y-m-d H:i:s') : '—',
+            ];
+        }
+
+        $display = ($user->display_name !== null && $user->display_name !== '') ? $user->display_name : $user->email;
+        $user->load('membershipPlan');
+        $planName = $user->membershipPlan !== null ? (string) $user->membershipPlan->name : '—';
+
+        return view('user/external_auth_audit', [
+            'userDisplay' => $display,
+            'headerUserMeta' => $planName,
+            'authName' => (string) $auth->name,
+            'logs' => $rows,
+        ]);
     }
 }
