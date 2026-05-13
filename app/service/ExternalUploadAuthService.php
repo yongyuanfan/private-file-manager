@@ -107,6 +107,15 @@ class ExternalUploadAuthService
         $auth->save();
     }
 
+    public function rotateToken(UserExternalUploadAuth $auth): string
+    {
+        $plainToken = $this->generatePlainToken();
+        $auth->token_hash = $this->hashToken($plainToken);
+        $auth->save();
+
+        return $plainToken;
+    }
+
     public function validateAuthorization(?UserExternalUploadAuth $auth): ?string
     {
         if ($auth === null) {

@@ -53,6 +53,9 @@
     @if(!empty($flashUpdated))
         <p class="uc-flash uc-flash--ok" role="status">授权配置已更新。</p>
     @endif
+    @if(!empty($flashRotated))
+        <p class="uc-flash uc-flash--ok" role="status">Token 已重新生成。旧 Token 已立即失效，请尽快更新第三方系统配置。</p>
+    @endif
     @if(!empty($errorMessage))
         <p class="uc-flash uc-flash--err" role="alert">{{ $errorMessage }}</p>
     @endif
@@ -138,6 +141,9 @@
                                     @if(!$it['disabled'])
                                         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
                                             <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/rotate-token" onsubmit="return confirm('确定重新生成 Token？旧 Token 将立即失效。');">
+                                                <button type="submit" class="btn btn-ghost btn-sm">重置 Token</button>
+                                            </form>
                                             <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
                                                 <button type="submit" class="btn btn-ghost btn-sm">禁用</button>
                                             </form>
@@ -149,6 +155,9 @@
                                     @else
                                         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
                                             <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/rotate-token" onsubmit="return confirm('确定重新生成 Token？旧 Token 将立即失效。');">
+                                                <button type="submit" class="btn btn-ghost btn-sm">重置 Token</button>
+                                            </form>
                                             <form method="post" action="/user/external-auths/{{ $it['id'] }}/enable">
                                                 <button type="submit" class="btn btn-ghost btn-sm">启用</button>
                                             </form>

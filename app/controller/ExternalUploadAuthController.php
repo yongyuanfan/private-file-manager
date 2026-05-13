@@ -56,6 +56,7 @@ class ExternalUploadAuthController
             'flashEnabled' => (string) $request->get('enabled', '') === '1',
             'flashDeleted' => (string) $request->get('deleted', '') === '1',
             'flashUpdated' => (string) $request->get('updated', '') === '1',
+            'flashRotated' => (string) $request->get('rotated', '') === '1',
             'createdToken' => trim((string) $request->get('token', '')),
             'errorMessage' => (string) $request->get('err', ''),
         ]);
@@ -183,6 +184,30 @@ class ExternalUploadAuthController
         }
 
         return redirect('/user/external-auths?deleted=1');
+    }
+
+    #[Route('/user/external-auths/{id}/rotate-token', 'POST')]
+    public function rotateToken(Request $request, string $id): Response
+    {
+        $user = $request->authUser;
+        $auth = UserExternalUploadAuth::query()
+            ->where('id', (int) $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($auth === null) {
+            return redirect('/user/external-auths?err=' . rawurlencode('授权不存在或无权操作'));
+        }
+
+        $service = new ExternalUploadAuthService();
+
+        try {
+            $plainToken = $service->rotateToken($auth);
+        } catch (Throwable) {
+            return redirect('/user/external-auths?err=' . rawurlencode('重新生成 Token 失败，请稍后重试'));
+        }
+
+        return redirect('/user/external-auths?rotated=1&token=' . rawurlencode($plainToken));
     }
 
     #[Route('/user/external-auths/{id}/audit', 'GET')]
