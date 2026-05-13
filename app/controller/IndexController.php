@@ -4,16 +4,16 @@ namespace app\controller;
 
 use app\middleware\RequireLogin;
 use app\model\UserUpload;
+use app\service\FileShareService;
 use app\service\StorageFileServeService;
 use app\service\UploadPolicyService;
+use app\service\UserUploadService;
 use Carbon\Carbon;
 use support\annotation\Middleware;
 use support\annotation\route\Route;
 use support\Request;
 use support\Response;
-use Symfony\Component\Mime\MimeTypes;
 use Throwable;
-use function base_path;
 use function json;
 use function view;
 use function redirect;
@@ -69,69 +69,21 @@ class IndexController
             return json(['code' => 2, 'msg' => '文件无效或未完整上传']);
         }
 
+        $uploadService = new UserUploadService();
+        $stored = $uploadService->store($request->authUser, $file, (string) $request->post('subdir', ''));
+        if (!$stored['ok']) {
+            return json(['code' => $stored['code'], 'msg' => $stored['msg']]);
+        }
+
         $policy = new UploadPolicyService();
-        $subdir = $policy->sanitizeRelativeSubdir((string) $request->post('subdir', ''));
-        if ($subdir === null) {
-            return json(['code' => 5, 'msg' => '子目录不合法：每一级须以字母或数字开头、结尾，中间可为字母、数字、下划线、连字符，多级用 / 分隔']);
-        }
-        if ($subdir === '') {
-            $subdir = Carbon::now()->format('Ymd');
-        }
-
-        $extRaw = pathinfo((string) $file->getUploadName(), PATHINFO_EXTENSION);
-        $extNoDot = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', $extRaw));
-        $ext = $extNoDot !== '' ? '.' . $extNoDot : '';
-        $deny = $policy->assertCanUpload($request->authUser, (int) $file->getSize(), $extNoDot);
-        if ($deny !== null) {
-            return json(['code' => 6, 'msg' => $deny]);
-        }
-
-        $userSeg = $policy->userStorageDirSegment($request->authUser);
-        $relativeDir = $userSeg . '/' . $subdir;
-
-        $root = base_path('storage');
-        $dir = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
-        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
-            return json(['code' => 3, 'msg' => '无法创建存储目录']);
-        }
-
-        $destName = $this->newUuidV4() . $ext;
-        $dest = $dir . DIRECTORY_SEPARATOR . $destName;
-
-        try {
-            $file->move($dest);
-        } catch (\Throwable) {
-            return json(['code' => 4, 'msg' => '保存文件失败']);
-        }
-
-        $relative = $relativeDir . '/' . $destName;
-
-        $mimeTypes = new MimeTypes();
-        $mime = $mimeTypes->guessMimeType($dest) ?? null;
-
-        try {
-            UserUpload::query()->create([
-                'user_id' => $request->authUser->id,
-                'storage_path' => $relative,
-                'original_name' => $file->getUploadName(),
-                'extension' => $extNoDot,
-                'file_size' => (int) (@filesize($dest) ?: 0),
-                'mime_type' => $mime,
-                'created_at' => Carbon::now(),
-            ]);
-        } catch (Throwable) {
-            @unlink($dest);
-
-            return json(['code' => 7, 'msg' => '保存上传记录失败']);
-        }
 
         return json([
             'code' => 0,
             'msg' => 'ok',
             'data' => [
-                'saved_as' => $destName,
-                'relative_path' => $relative,
-                'view_url' => $policy->fileViewUrl($request->authUser, $relative, $extNoDot),
+                'saved_as' => $stored['saved_as'],
+                'relative_path' => $stored['relative_path'],
+                'view_url' => $policy->fileViewUrl($request->authUser, (string) $stored['relative_path'], (string) $stored['extension']),
             ],
         ]);
     }
@@ -157,6 +109,9 @@ class IndexController
         $absolute = StorageFileServeService::resolveAbsolutePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+        if ($resolved['upload'] !== null && FileShareService::retentionExpiredForUpload((int) $resolved['upload']->id)) {
+            return new Response(410, ['Content-Type' => 'text/plain; charset=utf-8'], '文件已过期');
         }
 
         $response = StorageFileServeService::buildFileResponse($absolute, false);
@@ -193,6 +148,9 @@ class IndexController
         $absolute = StorageFileServeService::resolveAbsolutePath($resolved['key']);
         if ($absolute === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件不存在或路径不合法');
+        }
+        if ($resolved['upload'] !== null && FileShareService::retentionExpiredForUpload((int) $resolved['upload']->id)) {
+            return new Response(410, ['Content-Type' => 'text/plain; charset=utf-8'], '文件已过期');
         }
 
         $info = @getimagesize($absolute);
@@ -344,36 +302,15 @@ class IndexController
     }
 
     /**
-     * 生成 RFC 4122 版本 4 的 UUID 字符串。
-     * @return string
-     */
-    private function newUuidV4(): string
-    {
-        $b = random_bytes(16);
-        $b[6] = chr(ord($b[6]) & 0x0f | 0x40);
-        $b[8] = chr(ord($b[8]) & 0x3f | 0x80);
-        $h = bin2hex($b);
-
-        return sprintf(
-            '%s-%s-%s-%s-%s',
-            substr($h, 0, 8),
-            substr($h, 8, 4),
-            substr($h, 12, 4),
-            substr($h, 16, 4),
-            substr($h, 20, 12)
-        );
-    }
-
-    /**
      * 解析 GET path：禁止 URL 中出现当前用户账号目录名（首段）；在库中先按 path 原样匹配（旧数据），再按「账号目录/path」匹配。
      *
-     * @return array{key: string|null, error: 'empty'|'invalid'|'path_forbidden'|'forbidden'|null}
+     * @return array{key: string|null, upload: UserUpload|null, error: 'empty'|'invalid'|'path_forbidden'|'forbidden'|null}
      */
     private function resolveAuthorizedStorageKeyForRead(Request $request, string $relativeRaw): array
     {
         $relativeRaw = trim($relativeRaw);
         if ($relativeRaw === '') {
-            return ['key' => null, 'error' => 'empty'];
+            return ['key' => null, 'upload' => null, 'error' => 'empty'];
         }
 
         $policy = new UploadPolicyService();
@@ -381,23 +318,27 @@ class IndexController
 
         $k1 = StorageFileServeService::normalizeStoragePathForKey($relativeRaw);
         if ($k1 === null) {
-            return ['key' => null, 'error' => 'invalid'];
+            return ['key' => null, 'upload' => null, 'error' => 'invalid'];
         }
 
         $parts = explode('/', $k1);
         if ($parts[0] === $userSeg) {
-            return ['key' => null, 'error' => 'path_forbidden'];
+            return ['key' => null, 'upload' => null, 'error' => 'path_forbidden'];
         }
 
-        if ($policy->userOwnsStoragePath($request->authUser, $k1)) {
-            return ['key' => $k1, 'error' => null];
+        $upload = UserUpload::query()->where('user_id', $request->authUser->id)->where('storage_path', $k1)->first();
+        if ($upload !== null) {
+            return ['key' => $k1, 'upload' => $upload, 'error' => null];
         }
 
         $k2 = StorageFileServeService::normalizeStoragePathForKey($userSeg . '/' . ltrim($relativeRaw, '/'));
-        if ($k2 !== null && $policy->userOwnsStoragePath($request->authUser, $k2)) {
-            return ['key' => $k2, 'error' => null];
+        if ($k2 !== null) {
+            $upload = UserUpload::query()->where('user_id', $request->authUser->id)->where('storage_path', $k2)->first();
+            if ($upload !== null) {
+                return ['key' => $k2, 'upload' => $upload, 'error' => null];
+            }
         }
 
-        return ['key' => null, 'error' => 'forbidden'];
+        return ['key' => null, 'upload' => null, 'error' => 'forbidden'];
     }
 }

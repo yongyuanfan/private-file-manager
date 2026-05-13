@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\FileShare;
 use app\model\FileShareAccessLog;
+use app\model\UserUpload;
 use Carbon\Carbon;
 use support\Request;
 
@@ -154,5 +155,42 @@ class FileShareService
     public static function generateToken(): string
     {
         return bin2hex(random_bytes(32));
+    }
+
+    public static function createRetention(UserUpload $upload, ?Carbon $expiresAt, ?Carbon $now = null): FileShare
+    {
+        $now = $now ?? Carbon::now();
+
+        return FileShare::query()->create([
+            'user_id' => $upload->user_id,
+            'user_upload_id' => $upload->id,
+            'purpose' => 'retention',
+            'token' => self::generateToken(),
+            'password_hash' => null,
+            'max_views' => null,
+            'view_count' => 0,
+            'expires_at' => $expiresAt,
+            'revoked_at' => null,
+            'created_at' => $now,
+        ]);
+    }
+
+    public static function retentionForUpload(int $uploadId): ?FileShare
+    {
+        return FileShare::query()
+            ->where('user_upload_id', $uploadId)
+            ->where('purpose', 'retention')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public static function retentionExpiredForUpload(int $uploadId, ?Carbon $now = null): bool
+    {
+        $retention = self::retentionForUpload($uploadId);
+        if ($retention === null) {
+            return false;
+        }
+
+        return $retention->isExpired($now ?? Carbon::now());
     }
 }

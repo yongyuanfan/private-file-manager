@@ -16,6 +16,7 @@ class FileShare extends Model
     protected $fillable = [
         'user_id',
         'user_upload_id',
+        'purpose',
         'token',
         'password_hash',
         'max_views',
@@ -40,6 +41,16 @@ class FileShare extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function isSharePurpose(): bool
+    {
+        return $this->purpose === 'share';
+    }
+
+    public function isRetentionPurpose(): bool
+    {
+        return $this->purpose === 'retention';
     }
 
     public function userUpload(): BelongsTo

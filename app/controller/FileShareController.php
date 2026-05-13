@@ -33,7 +33,7 @@ class FileShareController
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '分享不存在或已失效');
         }
 
-        $share = FileShare::query()->where('token', $token)->with('userUpload')->first();
+        $share = FileShare::query()->where('token', $token)->where('purpose', 'share')->with('userUpload')->first();
         if ($share === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '分享不存在或已失效');
         }
@@ -68,6 +68,11 @@ class FileShareController
 
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '文件记录不存在');
         }
+        if (FileShareService::retentionExpiredForUpload((int) $upload->id, $now)) {
+            FileShareService::log((int) $share->id, 'file_denied', 'retention_expired', $request);
+
+            return new Response(410, ['Content-Type' => 'text/plain; charset=utf-8'], '文件已过期');
+        }
 
         $key = (string) $upload->storage_path;
         $absolute = StorageFileServeService::resolveAbsolutePath($key);
@@ -100,7 +105,7 @@ class FileShareController
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '分享不存在或已失效');
         }
 
-        $share = FileShare::query()->where('token', $token)->first();
+        $share = FileShare::query()->where('token', $token)->where('purpose', 'share')->first();
         if ($share === null) {
             return new Response(404, ['Content-Type' => 'text/plain; charset=utf-8'], '分享不存在或已失效');
         }
@@ -147,7 +152,7 @@ class FileShareController
             return view('share/gone', ['message' => '分享不存在或已失效']);
         }
 
-        $share = FileShare::query()->where('token', $token)->with('userUpload')->first();
+        $share = FileShare::query()->where('token', $token)->where('purpose', 'share')->with('userUpload')->first();
         if ($share === null) {
             return view('share/gone', ['message' => '分享不存在或已失效']);
         }
@@ -187,6 +192,7 @@ class FileShareController
         $user = $request->authUser;
         $rows = FileShare::query()
             ->where('user_id', $user->id)
+            ->where('purpose', 'share')
             ->with('userUpload')
             ->orderByDesc('id')
             ->limit(200)
@@ -315,6 +321,7 @@ class FileShareController
                 $share = FileShare::query()->create([
                     'user_id' => $user->id,
                     'user_upload_id' => $upload->id,
+                    'purpose' => 'share',
                     'token' => $token,
                     'password_hash' => $passwordHash,
                     'max_views' => $maxViews,
@@ -358,7 +365,7 @@ class FileShareController
     {
         $user = $request->authUser;
         $sid = (int) $id;
-        $share = FileShare::query()->where('id', $sid)->where('user_id', $user->id)->first();
+        $share = FileShare::query()->where('id', $sid)->where('user_id', $user->id)->where('purpose', 'share')->first();
         if ($share === null) {
             return redirect('/user/shares?err=notfound');
         }
@@ -378,7 +385,7 @@ class FileShareController
     {
         $user = $request->authUser;
         $sid = (int) $id;
-        $share = FileShare::query()->where('id', $sid)->where('user_id', $user->id)->with('userUpload')->first();
+        $share = FileShare::query()->where('id', $sid)->where('user_id', $user->id)->where('purpose', 'share')->with('userUpload')->first();
         if ($share === null) {
             return redirect('/user/shares?err=notfound');
         }
