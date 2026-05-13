@@ -88,6 +88,14 @@
 4. **可选：`.env`**  
    若使用环境变量覆盖配置，可在项目根目录放置 `.env`（webman 会在启动时加载）。
 
+5. **升级第三方上传能力（已有库）**
+
+   若你的数据库已按旧版本初始化，请执行根目录下的增量脚本：
+
+   ```bash
+   mysql -u root -p private-file-manager < database-upgrade-external-upload.sql
+   ```
+
 ## 启动与访问
 
 - **Linux / macOS**
@@ -115,6 +123,98 @@
 | `public/` | 静态资源（CSS/JS 等） |
 | `storage/` | 用户上传文件存储根目录 |
 | `config/` | 应用与框架配置 |
+
+## 第三方上传接口
+
+### 设计说明
+
+- 第三方上传必须绑定到系统中的一个用户授权
+- 上传文件仍写入该用户目录，并继续受该用户会员上传策略限制
+- 文件有效期由 `file_shares` 中 `purpose=retention` 的记录表达
+- 未配置有效期时永久有效；配置 `retention_ttl_days` 时按授权自动计算到期时间
+
+### 1. 创建授权
+
+当前版本未提供后台管理页，请先手动写库：
+
+1. 生成明文 token
+2. 对 token 计算 SHA256
+3. 把哈希写入 `user_external_upload_auths.token_hash`
+
+示例：
+
+```bash
+php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
+php -r 'echo hash("sha256", "替换为上一步生成的明文token"), PHP_EOL;'
+```
+
+示例插入：
+
+```sql
+INSERT INTO user_external_upload_auths
+  (user_id, name, token_hash, status, default_subdir, retention_ttl_days, created_at)
+VALUES
+  (1, '第三方系统A', '替换为sha256结果', 'active', 'external', 30, NOW(3));
+```
+
+字段说明：
+
+- `user_id`：代表哪个系统用户上传
+- `default_subdir`：默认子目录，可为空
+- `retention_ttl_days`：文件有效期天数；`NULL` 表示永久
+
+### 2. 上传接口
+
+- 路径：`POST /api/external/upload`
+- 鉴权：`Authorization: Bearer <明文token>`
+- Content-Type：`multipart/form-data`
+
+请求参数：
+
+- `file`：必填，上传文件
+- `subdir`：可选，上传子目录；未传时优先用授权默认目录，否则自动落到当天日期目录
+
+`curl` 示例：
+
+```bash
+curl -X POST "http://127.0.0.1:8787/api/external/upload" \
+  -H "Authorization: Bearer <明文token>" \
+  -F "file=@/path/to/demo.pdf" \
+  -F "subdir=contracts/2026"
+```
+
+成功响应示例：
+
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "upload_id": 123,
+    "saved_as": "1a2b3c4d-xxxx.pdf",
+    "relative_path": "demo_at_qq.com/contracts/2026/1a2b3c4d-xxxx.pdf",
+    "view_url": "/file?path=contracts%2F2026%2F1a2b3c4d-xxxx.pdf",
+    "expires_at": "2026-06-12 09:30:00"
+  }
+}
+```
+
+错误语义：
+
+- `401`：授权无效或未提供 Bearer Token
+- `403`：授权已禁用或撤销
+- `400`：文件缺失、目录非法、上传不完整
+- `422`：超过用户会员上传限制或类型不允许
+- `500`：创建 retention 失败；此时上传记录与文件会被回滚/删除
+
+### 3. 文件有效期行为
+
+- 第三方上传成功后，系统会自动创建一条 `file_shares.purpose=retention` 记录
+- 到期后，以下入口都会拒绝访问：
+  - `/file`
+  - `/image`
+  - `/share/{token}/file`
+- 历史普通上传文件没有 `retention` 记录时，仍按旧逻辑允许访问
 
 ## 相关文档
 
