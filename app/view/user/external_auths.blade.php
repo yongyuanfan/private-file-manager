@@ -138,41 +138,38 @@
                                     @endif
                                 </td>
                                 <td class="uc-table__narrow fm-share-actions" data-label="操作">
-                                    @if(!$it['disabled'])
-                                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                                            <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/rotate-token" onsubmit="return confirm('确定重新生成 Token？旧 Token 将立即失效。');">
-                                                <button type="submit" class="btn btn-ghost btn-sm">重置 Token</button>
+                                    <details class="fm-share-menu">
+                                        <summary class="fm-share-menu__summary">操作</summary>
+                                        <div class="fm-share-menu__panel" role="menu">
+                                            <button type="button" class="fm-share-menu__item" role="menuitem" data-edit-auth-target="ext-auth-edit-{{ $it['id'] }}">编辑配置</button>
+                                            <a href="/user/external-auths/{{ $it['id'] }}/audit" class="fm-share-menu__item" role="menuitem">审计</a>
+                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/rotate-token" class="fm-share-menu__form" onsubmit="return confirm('确定重新生成 Token？旧 Token 将立即失效。');">
+                                                <button type="submit" class="fm-share-menu__item" role="menuitem">重置 Token</button>
                                             </form>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
-                                                <button type="submit" class="btn btn-ghost btn-sm">禁用</button>
-                                            </form>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}" onsubmit="return confirm('确定删除该授权？删除后无法恢复，第三方将立即失效。');">
-                                                <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-ghost btn-sm">删除</button>
-                                            </form>
+                                            @if(!$it['disabled'])
+                                                <form method="post" action="/user/external-auths/{{ $it['id'] }}/disable" class="fm-share-menu__form" onsubmit="return confirm('确定禁用该授权？禁用后第三方将无法继续上传。');">
+                                                    <button type="submit" class="fm-share-menu__item" role="menuitem">禁用</button>
+                                                </form>
+                                                <form method="post" action="/user/external-auths/{{ $it['id'] }}" class="fm-share-menu__form" onsubmit="return confirm('确定删除该授权？删除后无法恢复，第三方将立即失效。');">
+                                                    <input type="hidden" name="_method" value="DELETE">
+                                                    <button type="submit" class="fm-share-menu__item fm-share-menu__item--danger" role="menuitem">删除</button>
+                                                </form>
+                                            @else
+                                                <form method="post" action="/user/external-auths/{{ $it['id'] }}/enable" class="fm-share-menu__form">
+                                                    <button type="submit" class="fm-share-menu__item" role="menuitem">启用</button>
+                                                </form>
+                                                <form method="post" action="/user/external-auths/{{ $it['id'] }}" class="fm-share-menu__form" onsubmit="return confirm('确定删除该授权？删除后无法恢复。');">
+                                                    <input type="hidden" name="_method" value="DELETE">
+                                                    <button type="submit" class="fm-share-menu__item fm-share-menu__item--danger" role="menuitem">删除</button>
+                                                </form>
+                                            @endif
                                         </div>
-                                    @else
-                                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                                            <a href="/user/external-auths/{{ $it['id'] }}/audit" class="btn btn-ghost btn-sm">审计</a>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/rotate-token" onsubmit="return confirm('确定重新生成 Token？旧 Token 将立即失效。');">
-                                                <button type="submit" class="btn btn-ghost btn-sm">重置 Token</button>
-                                            </form>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}/enable">
-                                                <button type="submit" class="btn btn-ghost btn-sm">启用</button>
-                                            </form>
-                                            <form method="post" action="/user/external-auths/{{ $it['id'] }}" onsubmit="return confirm('确定删除该授权？删除后无法恢复。');">
-                                                <input type="hidden" name="_method" value="DELETE">
-                                                <button type="submit" class="btn btn-ghost btn-sm">删除</button>
-                                            </form>
-                                        </div>
-                                    @endif
+                                    </details>
                                 </td>
                             </tr>
                             <tr>
                                 <td colspan="6" style="padding-top:0; border-top:none;">
-                                    <details style="margin:0 0 8px 0;">
-                                        <summary class="btn btn-ghost btn-sm" style="display:inline-flex; cursor:pointer;">编辑配置</summary>
+                                    <details id="ext-auth-edit-{{ $it['id'] }}" style="margin:0 0 8px 0;">
                                         <form method="post" action="/user/external-auths/{{ $it['id'] }}/update" class="fm-share-create" style="margin-top:12px;">
                                             <div class="fm-share-create__grid">
                                                 <div class="fm-share-create__field">

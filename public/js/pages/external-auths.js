@@ -1,4 +1,40 @@
 (function () {
+  function positionPanel(details) {
+    var sum = details.querySelector('.fm-share-menu__summary');
+    var panel = details.querySelector('.fm-share-menu__panel');
+    if (!sum || !panel) return;
+    var r = sum.getBoundingClientRect();
+    var pw = panel.offsetWidth || 168;
+    var ph = panel.offsetHeight || 120;
+    var left = Math.min(window.innerWidth - pw - 8, Math.max(8, r.right - pw));
+    var top = r.bottom + 6;
+    if (top + ph > window.innerHeight - 8) {
+      top = Math.max(8, r.top - ph - 6);
+    }
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+  }
+
+  document.querySelectorAll('details.fm-share-menu').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      document.querySelectorAll('details.fm-share-menu').forEach(function (o) {
+        if (o !== d) o.open = false;
+      });
+      requestAnimationFrame(function () {
+        positionPanel(d);
+      });
+    });
+  });
+
+  window.addEventListener(
+    'resize',
+    function () {
+      document.querySelectorAll('details.fm-share-menu[open]').forEach(positionPanel);
+    },
+    { passive: true }
+  );
+
   function showToast(msg) {
     var el = document.createElement('div');
     el.className = 'toast';
@@ -49,6 +85,30 @@
   }
 
   document.addEventListener('click', function (e) {
+    var editBtn = e.target.closest('[data-edit-auth-target]');
+    if (editBtn) {
+      e.preventDefault();
+      var targetId = editBtn.getAttribute('data-edit-auth-target') || '';
+      var editor = targetId ? document.getElementById(targetId) : null;
+      var menu = editBtn.closest('details.fm-share-menu');
+      if (menu) menu.open = false;
+      if (editor) {
+        editor.open = true;
+        requestAnimationFrame(function () {
+          editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          var input = editor.querySelector('input, textarea, select');
+          if (input) input.focus();
+        });
+      }
+      return;
+    }
+
+    if (!e.target.closest('details.fm-share-menu')) {
+      document.querySelectorAll('details.fm-share-menu[open]').forEach(function (d) {
+        d.open = false;
+      });
+    }
+
     var btn = e.target.closest('[data-copy-text]');
     if (!btn) return;
     e.preventDefault();
