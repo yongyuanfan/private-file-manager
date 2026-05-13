@@ -6,7 +6,7 @@ networks:
 
 services:
   private-file-manager:
-    image: yongyuanfan/php:8.4.4
+    image: yongyuanfan/workerman-php:8.4.4
     container_name: private-file-manager
     restart: unless-stopped
     ports:
