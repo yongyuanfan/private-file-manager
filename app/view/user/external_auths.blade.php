@@ -71,7 +71,9 @@
             <div style="border:1px solid rgba(127,127,127,.22); border-radius:12px; padding:12px; background:rgba(127,127,127,.06);">
                 <p class="fm-shares-table__val" style="margin:0 0 8px 0; text-align:left;">调用示例</p>
                 @php
-                    $curlExample = 'curl -X POST "' . request()->host(true) . '/api/external/upload" \\' . "\n"
+                    $serverUrl = (string) config('app.server_url', '');
+                    $uploadEndpoint = rtrim($serverUrl !== '' ? $serverUrl : request()->host(true), '/') . '/api/external/upload';
+                    $curlExample = 'curl -X POST "' . $uploadEndpoint . '" \\' . "\n"
                         . '  -H "Authorization: Bearer ' . $createdToken . '" \\' . "\n"
                         . '  -F "file=@/path/to/demo.pdf" \\' . "\n"
                         . '  -F "subdir=external/demo"';

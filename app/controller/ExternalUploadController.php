@@ -81,7 +81,7 @@ class ExternalUploadController
                 'upload_id' => (int) $upload->id,
                 'saved_as' => (string) $stored['saved_as'],
                 'relative_path' => (string) $stored['relative_path'],
-                'view_url' => $policy->fileViewUrl($user, (string) $stored['relative_path'], (string) $stored['extension']),
+                'view_url' => $policy->absoluteFileViewUrl($user, (string) $stored['relative_path'], (string) $stored['extension']),
                 'expires_at' => $authService->retentionExpiresAt($auth, $now)?->format('Y-m-d H:i:s'),
             ],
         ]);

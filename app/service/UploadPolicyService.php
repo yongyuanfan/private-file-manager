@@ -211,4 +211,15 @@ class UploadPolicyService
 
         return $base . '?' . $q;
     }
+
+    public function absoluteFileViewUrl(User $user, string $storagePath, string $extensionWithoutDot): string
+    {
+        $relativeUrl = $this->fileViewUrl($user, $storagePath, $extensionWithoutDot);
+        $serverUrl = trim((string) config('app.server_url', ''));
+        if ($serverUrl === '') {
+            return $relativeUrl;
+        }
+
+        return rtrim($serverUrl, '/') . $relativeUrl;
+    }
 }
