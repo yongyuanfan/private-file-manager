@@ -34,7 +34,7 @@
                 <span class="uc-breadcrumb__here">第三方授权</span>
             </p>
             <h1>第三方授权</h1>
-            <p class="lead uc-lead">为外部系统创建上传授权。第三方上传的文件默认永久有效，也可在授权上配置有效期天数。</p>
+            <p class="lead uc-lead">为外部系统创建上传授权。第三方上传的文件默认永久有效，也可在授权上配置有效期天数；创建后页面会展示一次 Token 和可直接调用的上传示例。</p>
         </div>
     </header>
 
@@ -57,7 +57,22 @@
     @if(!empty($createdToken))
         <section class="card uc-card" aria-labelledby="ext-token-heading" style="margin-bottom: 16px;">
             <h2 id="ext-token-heading" class="uc-section-title">新建 Token</h2>
-            <p class="uc-empty" style="text-align:left;">请复制保存：<code class="uc-code">{{ $createdToken }}</code></p>
+            <p class="uc-empty" style="text-align:left; margin-bottom: 10px;">请复制保存：<code class="uc-code">{{ $createdToken }}</code></p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 12px;">
+                <button type="button" class="btn btn-primary btn-sm" data-copy-text="{{ $createdToken }}" data-copy-label="Token">复制 Token</button>
+                <span class="fm-shares-table__val">该值只展示一次，请立即保存到第三方系统配置中。</span>
+            </div>
+            <div style="border:1px solid rgba(127,127,127,.22); border-radius:12px; padding:12px; background:rgba(127,127,127,.06);">
+                <p class="fm-shares-table__val" style="margin:0 0 8px 0; text-align:left;">调用示例</p>
+                @php
+                    $curlExample = 'curl -X POST "' . request()->host(true) . '/api/external/upload" \\' . "\n"
+                        . '  -H "Authorization: Bearer ' . $createdToken . '" \\' . "\n"
+                        . '  -F "file=@/path/to/demo.pdf" \\' . "\n"
+                        . '  -F "subdir=external/demo"';
+                @endphp
+                <pre style="margin:0 0 10px 0; white-space:pre-wrap; word-break:break-all;"><code>{{ $curlExample }}</code></pre>
+                <button type="button" class="btn btn-ghost btn-sm" data-copy-text="{{ $curlExample }}" data-copy-label="curl 示例">复制 curl 示例</button>
+            </div>
         </section>
     @endif
 
@@ -105,7 +120,7 @@
                         <tbody>
                         @foreach($items as $it)
                             <tr>
-                                <td data-label="名称"><span class="fm-table__name">{{ $it['name'] }}</span></td>
+                                <td data-label="名称"><span class="fm-table__name">{{ $it['name'] }}</span><div class="fm-table__share"><span class="fm-shares-table__val">创建于 {{ $it['created_label'] }}</span></div></td>
                                 <td data-label="默认目录"><span class="fm-shares-table__val">{{ $it['default_subdir'] }}</span></td>
                                 <td data-label="有效期"><span class="fm-shares-table__val">{{ $it['retention_label'] }}</span></td>
                                 <td data-label="最近使用"><span class="fm-shares-table__val">{{ $it['last_used_label'] }}</span></td>
@@ -150,5 +165,6 @@
 </div>
 
 <script src="/js/pages/home-theme.js"></script>
+<script src="/js/pages/external-auths.js"></script>
 </body>
 </html>
