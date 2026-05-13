@@ -16,3 +16,4 @@ services:
       - ./storage:/app/storage
     networks:
       - private_file_manager_network
+    command: ["./private-file-manager"]
