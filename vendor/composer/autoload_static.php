@@ -21,13 +21,13 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         '06a34129a50df3d9257ee706cf3c875b' => __DIR__ . '/..' . '/illuminate/filesystem/functions.php',
-        'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '253c157292f75eb38082b5acb06f3f01' => __DIR__ . '/..' . '/nikic/fast-route/src/functions.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '8825ede83f2f289127722d4e842cf7e8' => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme/bootstrap.php',
-        '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
+        '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         'b6b991a57620e2fb6b2f66f03fe9ddc2' => __DIR__ . '/..' . '/symfony/string/Resources/functions.php',
         'd2136ff22b54ac75cd96a40e0022218e' => __DIR__ . '/..' . '/workerman/webman-framework/src/support/helpers.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
@@ -98,6 +98,7 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
             'Psr\\EventDispatcher\\' => 20,
             'Psr\\Container\\' => 14,
             'Psr\\Clock\\' => 10,
+            'PhpOption\\' => 10,
         ),
         'M' =>
         array (
@@ -135,6 +136,7 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
             'GuzzleHttp\\Psr7\\' => 16,
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
+            'GrahamCampbell\\ResultType\\' => 26,
         ),
         'F' =>
         array (
@@ -147,6 +149,7 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         ),
         'D' =>
         array (
+            'Dotenv\\' => 7,
             'Doctrine\\Inflector\\' => 19,
             'Doctrine\\Common\\Lexer\\' => 22,
         ),
@@ -194,8 +197,8 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         ),
         'Workerman\\' =>
         array (
-            0 => __DIR__ . '/..' . '/workerman/coroutine/src',
-            1 => __DIR__ . '/..' . '/workerman/workerman/src',
+            0 => __DIR__ . '/..' . '/workerman/workerman/src',
+            1 => __DIR__ . '/..' . '/workerman/coroutine/src',
         ),
         'Webman\\Validation\\' =>
         array (
@@ -354,6 +357,10 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         array (
             0 => __DIR__ . '/..' . '/psr/clock/src',
         ),
+        'PhpOption\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
+        ),
         'Monolog\\' =>
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
@@ -446,6 +453,10 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
+        'GrahamCampbell\\ResultType\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
+        ),
         'Fruitcake\\Cors\\' =>
         array (
             0 => __DIR__ . '/..' . '/fruitcake/php-cors/src',
@@ -457,6 +468,10 @@ class ComposerStaticInit496d79a151421259c51ea8d3a4b43f83
         'Egulias\\EmailValidator\\' =>
         array (
             0 => __DIR__ . '/..' . '/egulias/email-validator/src',
+        ),
+        'Dotenv\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
         'Doctrine\\Inflector\\' =>
         array (
