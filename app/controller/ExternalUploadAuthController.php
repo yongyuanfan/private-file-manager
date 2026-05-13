@@ -32,7 +32,9 @@ class ExternalUploadAuthController
                 'id' => (int) $row->id,
                 'name' => (string) $row->name,
                 'status' => (string) $row->status,
+                'default_subdir_raw' => (string) ($row->default_subdir ?? ''),
                 'default_subdir' => $row->default_subdir !== null && $row->default_subdir !== '' ? (string) $row->default_subdir : '自动按日期目录',
+                'retention_ttl_days' => $row->retention_ttl_days !== null ? (int) $row->retention_ttl_days : null,
                 'retention_label' => $row->retention_ttl_days === null ? '永久' : ((int) $row->retention_ttl_days . ' 天'),
                 'last_used_label' => $row->last_used_at !== null ? $row->last_used_at->format('Y-m-d H:i') : '—',
                 'created_label' => $row->created_at !== null ? $row->created_at->format('Y-m-d H:i') : '—',
@@ -52,6 +54,7 @@ class ExternalUploadAuthController
             'flashDisabled' => (string) $request->get('disabled', '') === '1',
             'flashEnabled' => (string) $request->get('enabled', '') === '1',
             'flashDeleted' => (string) $request->get('deleted', '') === '1',
+            'flashUpdated' => (string) $request->get('updated', '') === '1',
             'createdToken' => trim((string) $request->get('token', '')),
             'errorMessage' => (string) $request->get('err', ''),
         ]);
@@ -61,28 +64,14 @@ class ExternalUploadAuthController
     public function create(Request $request): Response
     {
         $user = $request->authUser;
-        $name = trim((string) $request->post('name', ''));
-        $defaultSubdir = trim((string) $request->post('default_subdir', ''));
-        $ttlRaw = trim((string) $request->post('retention_ttl_days', ''));
-
-        if ($name === '') {
-            return redirect('/user/external-auths?err=' . rawurlencode('请填写授权名称'));
-        }
-        if (mb_strlen($name) > 100) {
-            return redirect('/user/external-auths?err=' . rawurlencode('授权名称不能超过 100 个字符'));
-        }
-
-        $ttlDays = null;
-        if ($ttlRaw !== '') {
-            $ttlDays = (int) $ttlRaw;
-            if ($ttlDays < 1 || $ttlDays > 3650) {
-                return redirect('/user/external-auths?err=' . rawurlencode('有效期天数须在 1～3650 之间，或留空表示永久'));
-            }
-        }
+        $name = (string) $request->post('name', '');
+        $defaultSubdir = (string) $request->post('default_subdir', '');
+        $ttlRaw = (string) $request->post('retention_ttl_days', '');
 
         $service = new ExternalUploadAuthService();
 
         try {
+            $ttlDays = $service->validateRetentionTtlDays($ttlRaw);
             $created = $service->createForUser($user, $name, $defaultSubdir, $ttlDays);
         } catch (\InvalidArgumentException $e) {
             return redirect('/user/external-auths?err=' . rawurlencode($e->getMessage()));
@@ -91,6 +80,38 @@ class ExternalUploadAuthController
         }
 
         return redirect('/user/external-auths?created=1&token=' . rawurlencode((string) $created['plain_token']));
+    }
+
+    #[Route('/user/external-auths/{id}/update', 'POST')]
+    public function update(Request $request, string $id): Response
+    {
+        $user = $request->authUser;
+        $auth = UserExternalUploadAuth::query()
+            ->where('id', (int) $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($auth === null) {
+            return redirect('/user/external-auths?err=' . rawurlencode('授权不存在或无权操作'));
+        }
+
+        $service = new ExternalUploadAuthService();
+
+        try {
+            $ttlDays = $service->validateRetentionTtlDays((string) $request->post('retention_ttl_days', ''));
+            $service->updateAuthorization(
+                $auth,
+                (string) $request->post('name', ''),
+                (string) $request->post('default_subdir', ''),
+                $ttlDays
+            );
+        } catch (\InvalidArgumentException $e) {
+            return redirect('/user/external-auths?err=' . rawurlencode($e->getMessage()));
+        } catch (Throwable) {
+            return redirect('/user/external-auths?err=' . rawurlencode('更新授权失败，请稍后重试'));
+        }
+
+        return redirect('/user/external-auths?updated=1');
     }
 
     #[Route('/user/external-auths/{id}/disable', 'POST')]

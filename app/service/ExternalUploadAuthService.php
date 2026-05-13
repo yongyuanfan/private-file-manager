@@ -9,6 +9,45 @@ use support\Request;
 
 class ExternalUploadAuthService
 {
+    public function validateName(string $name): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            throw new \InvalidArgumentException('请填写授权名称');
+        }
+        if (mb_strlen($name) > 100) {
+            throw new \InvalidArgumentException('授权名称不能超过 100 个字符');
+        }
+
+        return $name;
+    }
+
+    public function validateRetentionTtlDays(string $ttlRaw): ?int
+    {
+        $ttlRaw = trim($ttlRaw);
+        if ($ttlRaw === '') {
+            return null;
+        }
+
+        $ttlDays = (int) $ttlRaw;
+        if ($ttlDays < 1 || $ttlDays > 3650) {
+            throw new \InvalidArgumentException('有效期天数须在 1～3650 之间，或留空表示永久');
+        }
+
+        return $ttlDays;
+    }
+
+    public function sanitizeDefaultSubdir(string $defaultSubdir): ?string
+    {
+        $policy = new UploadPolicyService();
+        $subdir = $policy->sanitizeRelativeSubdir($defaultSubdir);
+        if ($subdir === null) {
+            throw new \InvalidArgumentException('默认子目录不合法');
+        }
+
+        return $subdir !== '' ? $subdir : null;
+    }
+
     public function generatePlainToken(): string
     {
         return bin2hex(random_bytes(32));
@@ -39,11 +78,8 @@ class ExternalUploadAuthService
 
     public function createForUser(User $user, string $name, string $defaultSubdir, ?int $retentionTtlDays): array
     {
-        $policy = new UploadPolicyService();
-        $subdir = $policy->sanitizeRelativeSubdir($defaultSubdir);
-        if ($subdir === null) {
-            throw new \InvalidArgumentException('默认子目录不合法');
-        }
+        $name = $this->validateName($name);
+        $subdir = $this->sanitizeDefaultSubdir($defaultSubdir);
 
         $plainToken = $this->generatePlainToken();
         $auth = UserExternalUploadAuth::query()->create([
@@ -51,7 +87,7 @@ class ExternalUploadAuthService
             'name' => $name,
             'token_hash' => $this->hashToken($plainToken),
             'status' => 'active',
-            'default_subdir' => $subdir !== '' ? $subdir : null,
+            'default_subdir' => $subdir,
             'retention_ttl_days' => $retentionTtlDays,
             'created_at' => Carbon::now(),
             'last_used_at' => null,
@@ -59,6 +95,14 @@ class ExternalUploadAuthService
         ]);
 
         return ['auth' => $auth, 'plain_token' => $plainToken];
+    }
+
+    public function updateAuthorization(UserExternalUploadAuth $auth, string $name, string $defaultSubdir, ?int $retentionTtlDays): void
+    {
+        $auth->name = $this->validateName($name);
+        $auth->default_subdir = $this->sanitizeDefaultSubdir($defaultSubdir);
+        $auth->retention_ttl_days = $retentionTtlDays;
+        $auth->save();
     }
 
     public function validateAuthorization(?UserExternalUploadAuth $auth): ?string

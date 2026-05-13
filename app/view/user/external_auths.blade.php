@@ -50,6 +50,9 @@
     @if(!empty($flashDeleted))
         <p class="uc-flash uc-flash--ok" role="status">授权已删除。</p>
     @endif
+    @if(!empty($flashUpdated))
+        <p class="uc-flash uc-flash--ok" role="status">授权配置已更新。</p>
+    @endif
     @if(!empty($errorMessage))
         <p class="uc-flash uc-flash--err" role="alert">{{ $errorMessage }}</p>
     @endif
@@ -153,6 +156,32 @@
                                             </form>
                                         </div>
                                     @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="6" style="padding-top:0; border-top:none;">
+                                    <details style="margin:0 0 8px 0;">
+                                        <summary class="btn btn-ghost btn-sm" style="display:inline-flex; cursor:pointer;">编辑配置</summary>
+                                        <form method="post" action="/user/external-auths/{{ $it['id'] }}/update" class="fm-share-create" style="margin-top:12px;">
+                                            <div class="fm-share-create__grid">
+                                                <div class="fm-share-create__field">
+                                                    <label for="ext-edit-name-{{ $it['id'] }}">授权名称</label>
+                                                    <input type="text" id="ext-edit-name-{{ $it['id'] }}" name="name" maxlength="100" required value="{{ $it['name'] }}">
+                                                </div>
+                                                <div class="fm-share-create__field">
+                                                    <label for="ext-edit-subdir-{{ $it['id'] }}">默认子目录</label>
+                                                    <input type="text" id="ext-edit-subdir-{{ $it['id'] }}" name="default_subdir" value="{{ $it['default_subdir_raw'] }}" placeholder="留空则按日期目录">
+                                                </div>
+                                                <div class="fm-share-create__field">
+                                                    <label for="ext-edit-ttl-{{ $it['id'] }}">有效期天数</label>
+                                                    <input type="number" id="ext-edit-ttl-{{ $it['id'] }}" name="retention_ttl_days" min="1" max="3650" value="{{ $it['retention_ttl_days'] ?? '' }}" placeholder="留空表示永久">
+                                                </div>
+                                            </div>
+                                            <div class="fm-share-create__actions">
+                                                <button type="submit" class="btn btn-primary btn-sm">保存修改</button>
+                                            </div>
+                                        </form>
+                                    </details>
                                 </td>
                             </tr>
                         @endforeach
