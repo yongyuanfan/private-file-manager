@@ -1,6 +1,4 @@
 networks:
-  private_file_manager_network:
-    driver: bridge
   shared_network:
     external: true
 
@@ -14,6 +12,5 @@ services:
     volumes:
       - .:/app
     networks:
-      - private_file_manager_network
       - shared_network
-    command: ["./private-file-manager"]
+    command: ["/bin/sh", "/app/private-file-manager"]

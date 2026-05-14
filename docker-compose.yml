@@ -13,4 +13,4 @@ services:
       - .:/app
     networks:
       - private_file_manager_network
-    command: ["./private-file-manager"]
+    command: ["/bin/sh", "/app/private-file-manager"]

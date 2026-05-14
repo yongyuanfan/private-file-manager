@@ -11,7 +11,7 @@ services:
       - ./:/app
     ports:
       - "8787:8787"
-    command: ["./private-file-manager"]
+    command: ["/bin/sh", "/app/private-file-manager"]
     depends_on:
        - mysql
        - redis
