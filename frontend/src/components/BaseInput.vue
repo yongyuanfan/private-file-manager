@@ -2,9 +2,14 @@
 defineProps<{
   modelValue: string
   label: string
+  name?: string
   type?: string
   placeholder?: string
   autocomplete?: string
+  maxlength?: number | string
+  minlength?: number | string
+  required?: boolean
+  autofocus?: boolean
   error?: string
 }>()
 
@@ -22,10 +27,15 @@ const emit = defineEmits<{
       </span>
       <input
         class="base-input__field"
+        :name="name"
         :type="type ?? 'text'"
         :value="modelValue"
         :placeholder="placeholder"
         :autocomplete="autocomplete"
+        :maxlength="maxlength"
+        :minlength="minlength"
+        :required="required"
+        :autofocus="autofocus"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       />
       <span v-if="$slots.suffix" class="base-input__suffix">

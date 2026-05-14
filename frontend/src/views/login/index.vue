@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import LoginBrand from './components/LoginBrand.vue'
+import AppBrand from '@/components/AppBrand.vue'
+import AuthPageLayout from '@/components/AuthPageLayout.vue'
+
 import LoginForm from './components/LoginForm.vue'
 
 type LoginPayload = {
@@ -65,114 +67,15 @@ const handleSubmit = async (payload: LoginPayload) => {
 </script>
 
 <template>
-  <main class="login-page">
-    <div class="login-page__grid" aria-hidden="true" />
-    <section class="login-page__content">
-      <LoginBrand />
+  <AuthPageLayout
+    footer-text="还没有账户?"
+    footer-link-label="注册"
+    :footer-link-href="`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`"
+  >
+    <template #brand>
+      <AppBrand />
+    </template>
 
-      <div class="login-page__card">
-        <LoginForm :loading="loading" :error="error" :next="next" @submit="handleSubmit" />
-      </div>
-
-      <p class="login-page__signup">
-        还没有账户?
-        <a :href="`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`">注册</a>
-      </p>
-
-      <p class="login-page__copyright">© 2026 FlyMux. All rights reserved.</p>
-    </section>
-  </main>
+    <LoginForm :loading="loading" :error="error" :next="next" @submit="handleSubmit" />
+  </AuthPageLayout>
 </template>
-
-<style scoped>
-:global(body) {
-  margin: 0;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  background: #f6f8fc;
-}
-
-:global(*) {
-  box-sizing: border-box;
-}
-
-.login-page {
-  position: relative;
-  min-height: 100vh;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.88), rgba(246, 248, 252, 0.92)),
-    #f6f8fc;
-}
-
-.login-page__grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(222, 229, 240, 0.7) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(222, 229, 240, 0.7) 1px, transparent 1px);
-  background-size: 62px 62px;
-  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
-}
-
-.login-page__content {
-  position: relative;
-  z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 32px 16px;
-}
-
-.login-page__card {
-  width: min(100%, 450px);
-  padding: 36px 34px 32px;
-  border: 1px solid rgba(227, 232, 241, 0.95);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 24px 60px rgba(43, 57, 96, 0.12);
-  display: grid;
-  gap: 24px;
-}
-
-.login-page__signup,
-.login-page__copyright {
-  margin: 0;
-  text-align: center;
-}
-
-.login-page__signup {
-  color: #98a3b7;
-  font-size: 14px;
-}
-
-.login-page__signup a {
-  margin-left: 8px;
-  color: #556684;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.login-page__copyright {
-  color: #b1b9c8;
-  font-size: 13px;
-}
-
-@media (max-width: 640px) {
-  .login-page__content {
-    gap: 24px;
-  }
-
-  .login-page__card {
-    padding: 28px 20px 24px;
-    border-radius: 20px;
-  }
-}
-</style>

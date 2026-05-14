@@ -1,6 +1,15 @@
+<script setup lang="ts">
+import { storeToRefs } from 'pinia'
+
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
+const { appName } = storeToRefs(appStore)
+</script>
+
 <template>
-  <div class="login-brand">
-    <div class="login-brand__mark" aria-hidden="true">
+  <div class="app-brand">
+    <div class="app-brand__mark" aria-hidden="true">
       <svg viewBox="0 0 48 48" role="img">
         <rect x="0" y="0" width="48" height="48" rx="16" fill="url(#brand-gradient)" />
         <circle cx="17" cy="19" r="5" fill="#ffffff" />
@@ -16,19 +25,19 @@
         </defs>
       </svg>
     </div>
-    <span class="login-brand__name">FlyMux</span>
+    <span class="app-brand__name">{{ appName }}</span>
   </div>
 </template>
 
 <style scoped>
-.login-brand {
+.app-brand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
 }
 
-.login-brand__mark {
+.app-brand__mark {
   width: 54px;
   height: 54px;
   display: flex;
@@ -39,12 +48,12 @@
   box-shadow: 0 16px 34px rgba(33, 46, 79, 0.15);
 }
 
-.login-brand__mark svg {
+.app-brand__mark svg {
   width: 46px;
   height: 46px;
 }
 
-.login-brand__name {
+.app-brand__name {
   color: #60708c;
   font-size: 28px;
   font-weight: 700;
@@ -52,7 +61,7 @@
 }
 
 @media (max-width: 640px) {
-  .login-brand__name {
+  .app-brand__name {
     font-size: 24px;
   }
 }
