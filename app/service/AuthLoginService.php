@@ -64,7 +64,7 @@ class AuthLoginService
     {
         $next = trim($next);
         if ($next === '' || $next[0] !== '/' || str_starts_with($next, '//')) {
-            return '/home';
+            return '/dashboard';
         }
 
         return $next;

@@ -57,7 +57,7 @@ const handleSubmit = async (payload: LoginPayload) => {
       return
     }
 
-    window.location.href = result.data?.redirect || '/home'
+    window.location.href = result.data?.redirect || '/dashboard'
   } catch {
     error.value = '网络异常，请稍后重试'
   } finally {

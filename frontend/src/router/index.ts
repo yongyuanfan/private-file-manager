@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { setupRouterGuards } from './guards'
 
+import DashboardView from '@/views/dashboard/index.vue'
 import LoginView from '@/views/login/index.vue'
 import RegisterView from '@/views/register/index.vue'
 
@@ -17,6 +18,7 @@ const router = createRouter({
       name: 'login',
       meta: {
         title: '登录',
+        guestOnly: true,
       },
       component: LoginView,
     },
@@ -25,8 +27,18 @@ const router = createRouter({
       name: 'register',
       meta: {
         title: '注册',
+        guestOnly: true,
       },
       component: RegisterView,
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      meta: {
+        title: '仪表盘',
+        requiresAuth: true,
+      },
+      component: DashboardView,
     },
   ],
 })
