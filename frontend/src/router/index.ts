@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { setupRouterGuards } from './guards'
+
 import LoginView from '@/views/login/index.vue'
 
 const router = createRouter({
@@ -12,9 +14,14 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
+      meta: {
+        title: '登录',
+      },
       component: LoginView,
     },
   ],
 })
+
+setupRouterGuards(router)
 
 export default router
