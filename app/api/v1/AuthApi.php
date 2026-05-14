@@ -67,4 +67,15 @@ class AuthApi
             ],
         ]);
     }
+
+    #[Route('/api/v1/auth/logout', 'POST')]
+    public function logout(Request $request): Response
+    {
+        AuthTokenService::revokeCurrent($request);
+
+        return AuthTokenService::clearAuthCookie(json([
+            'code' => 0,
+            'msg' => 'ok',
+        ]));
+    }
 }

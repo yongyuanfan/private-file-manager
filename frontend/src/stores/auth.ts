@@ -15,6 +15,11 @@ type MeResponse = {
   }
 }
 
+type BasicResponse = {
+  code: number
+  msg: string
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const checked = ref(false)
@@ -71,6 +76,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const logout = async () => {
+    try {
+      const response = await fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const result = (await response.json()) as BasicResponse
+        if (result.code === 0) {
+          clearAuth()
+          return true
+        }
+      }
+    } catch {
+    }
+
+    clearAuth()
+    return false
+  }
+
   return {
     user,
     checked,
@@ -78,5 +107,6 @@ export const useAuthStore = defineStore('auth', () => {
     setUser,
     clearAuth,
     ensureAuth,
+    logout,
   }
 })
