@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-import GithubLoginButton from './components/GithubLoginButton.vue'
 import LoginBrand from './components/LoginBrand.vue'
-import LoginDivider from './components/LoginDivider.vue'
 import LoginForm from './components/LoginForm.vue'
 
 type LoginPayload = {
@@ -22,8 +20,6 @@ type LoginResponse = {
 }
 
 const route = useRoute()
-const router = useRouter()
-
 const loading = ref(false)
 const error = ref('')
 
@@ -66,10 +62,6 @@ const handleSubmit = async (payload: LoginPayload) => {
     loading.value = false
   }
 }
-
-const handleGithubLogin = () => {
-  error.value = 'GitHub 登录暂未开放'
-}
 </script>
 
 <template>
@@ -80,8 +72,6 @@ const handleGithubLogin = () => {
 
       <div class="login-page__card">
         <LoginForm :loading="loading" :error="error" :next="next" @submit="handleSubmit" />
-        <LoginDivider />
-        <GithubLoginButton :disabled="loading" @click="handleGithubLogin" />
       </div>
 
       <p class="login-page__signup">
