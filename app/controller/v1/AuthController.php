@@ -1,6 +1,6 @@
 <?php
 
-namespace app\api\v1;
+namespace app\controller\v1;
 
 use app\service\AuthLoginService;
 use app\service\AuthTokenService;
@@ -9,7 +9,7 @@ use support\Request;
 use support\Response;
 use function json;
 
-class AuthApi
+class AuthController
 {
     #[Route('/api/v1/auth/login', 'POST')]
     public function login(Request $request): Response
