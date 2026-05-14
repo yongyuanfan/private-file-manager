@@ -7,7 +7,6 @@ import BaseInput from '@/components/BaseInput.vue'
 const props = defineProps<{
   loading?: boolean
   error?: string
-  success?: string
   next?: string
 }>()
 
@@ -72,7 +71,6 @@ const submit = () => {
       <p>登录您的账户以继续</p>
     </div>
 
-    <p v-if="success" class="login-form__alert login-form__alert--success">{{ success }}</p>
     <p v-if="error" class="login-form__alert">{{ error }}</p>
 
     <BaseInput
@@ -241,11 +239,6 @@ const submit = () => {
   color: #bf4545;
   background: rgba(227, 107, 107, 0.12);
   font-size: 13px;
-}
-
-.login-form__alert--success {
-  color: #1f7a45;
-  background: rgba(75, 181, 116, 0.14);
 }
 
 .login-form__password-block {

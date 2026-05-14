@@ -12,11 +12,6 @@ const route = useRoute()
 const loading = ref(false)
 const error = ref('')
 
-const success = computed(() => {
-  const value = route.query.success
-  return value === 'registered' ? '注册成功，请登录' : ''
-})
-
 const next = computed(() => {
   const value = route.query.next
   return typeof value === 'string' ? value : ''
@@ -39,7 +34,10 @@ const handleSubmit = async (payload: LoginParams) => {
       return
     }
 
-    window.location.href = result.data?.redirect || '/dashboard'
+    const redirect = result.data?.redirect || '/dashboard'
+    const url = new URL(redirect, window.location.origin)
+    url.searchParams.set('toast', 'login-success')
+    window.location.href = `${url.pathname}${url.search}${url.hash}`
   } catch {
     error.value = '网络异常，请稍后重试'
   } finally {
@@ -61,7 +59,6 @@ const handleSubmit = async (payload: LoginParams) => {
     <LoginForm
       :loading="loading"
       :error="error || routeError"
-      :success="success"
       :next="next"
       @submit="handleSubmit"
     />

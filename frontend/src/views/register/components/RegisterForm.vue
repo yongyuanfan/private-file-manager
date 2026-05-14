@@ -83,7 +83,7 @@ const submit = async () => {
       return
     }
 
-    const redirect = result.data?.redirect || '/login?success=registered'
+    const redirect = result.data?.redirect || '/login?toast=register-success'
     window.location.href = redirect
   } catch {
     submitError.value = '网络异常，请稍后重试'

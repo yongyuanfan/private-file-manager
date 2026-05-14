@@ -94,7 +94,7 @@ class AuthRegisterService
 
     private function buildLoginRedirect(string $next): string
     {
-        $query = 'success=' . rawurlencode('registered');
+        $query = 'toast=' . rawurlencode('register-success');
         if ($next !== '/home') {
             $query .= '&next=' . rawurlencode($next);
         }

@@ -18,7 +18,7 @@ const handleLogout = async () => {
 
   try {
     await authStore.logout()
-    await router.push('/login')
+    await router.push('/login?toast=logout-success')
   } finally {
     loggingOut.value = false
   }
