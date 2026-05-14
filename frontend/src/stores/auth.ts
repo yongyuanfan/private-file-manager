@@ -1,24 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-type AuthUser = {
-  id: number
-  email: string
-  display_name: string
-}
-
-type MeResponse = {
-  code: number
-  msg: string
-  data?: {
-    user?: AuthUser
-  }
-}
-
-type BasicResponse = {
-  code: number
-  msg: string
-}
+import { getCurrentUser, logout as logoutRequest, type AuthUser } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
@@ -47,20 +30,13 @@ export const useAuthStore = defineStore('auth', () => {
     checking.value = true
 
     try {
-      const response = await fetch('/api/v1/auth/me', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-      })
+      const { ok, result } = await getCurrentUser()
 
-      if (!response.ok) {
+      if (!ok) {
         clearAuth()
         return null
       }
 
-      const result = (await response.json()) as MeResponse
       if (result.code !== 0 || !result.data?.user) {
         clearAuth()
         return null
@@ -78,16 +54,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const logout = async () => {
     try {
-      const response = await fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-      })
+      const { ok, result } = await logoutRequest()
 
-      if (response.ok) {
-        const result = (await response.json()) as BasicResponse
+      if (ok) {
         if (result.code === 0) {
           clearAuth()
           return true

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
+import { register } from '@/api/auth'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseInput from '@/components/BaseInput.vue'
 
@@ -14,16 +15,19 @@ const password = ref('')
 const passwordConfirmation = ref('')
 const showPassword = ref(false)
 const showPasswordConfirmation = ref(false)
+const submitting = ref(false)
+const submitError = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 const passwordConfirmationError = ref('')
 
 watch(
-  () => [email.value, password.value, passwordConfirmation.value],
+  () => [email.value, password.value, passwordConfirmation.value, displayName.value],
   () => {
     emailError.value = ''
     passwordError.value = ''
     passwordConfirmationError.value = ''
+    submitError.value = ''
   },
 )
 
@@ -58,21 +62,46 @@ const validate = () => {
   return !emailError.value && !passwordError.value && !passwordConfirmationError.value
 }
 
-const submit = (event: Event) => {
+const submit = async () => {
   if (!validate()) {
-    event.preventDefault()
+    return
+  }
+
+  submitting.value = true
+
+  try {
+    const { ok, result } = await register({
+      email: email.value.trim(),
+      password: password.value,
+      passwordConfirmation: passwordConfirmation.value,
+      displayName: displayName.value.trim(),
+      next: props.next ?? '',
+    })
+
+    if (!ok || result.code !== 0) {
+      submitError.value = result.msg || '注册失败，请稍后重试'
+      return
+    }
+
+    const redirect = result.data?.redirect || '/login?success=registered'
+    window.location.href = redirect
+  } catch {
+    submitError.value = '网络异常，请稍后重试'
+  } finally {
+    submitting.value = false
   }
 }
 </script>
 
 <template>
-  <form class="register-form" method="post" action="/register" @submit="submit">
-    <input v-if="next" type="hidden" name="next" :value="next" />
+  <form class="register-form" @submit.prevent="submit">
 
     <div class="register-form__heading">
       <h1>创建账户</h1>
       <p>注册后默认使用免费会员配额与类型限制</p>
     </div>
+
+    <p v-if="submitError" class="register-form__alert">{{ submitError }}</p>
 
     <BaseInput
       v-model="email"
@@ -244,8 +273,8 @@ const submit = (event: Event) => {
       </template>
     </BaseInput>
 
-    <BaseButton type="submit" block>
-      <span>注册</span>
+    <BaseButton type="submit" block :loading="submitting">
+      <span>{{ submitting ? '注册中...' : '注册' }}</span>
     </BaseButton>
   </form>
 </template>
@@ -271,6 +300,15 @@ const submit = (event: Event) => {
   margin: 12px 0 0;
   color: #8f9aae;
   font-size: 14px;
+}
+
+.register-form__alert {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #bf4545;
+  background: rgba(227, 107, 107, 0.12);
+  font-size: 13px;
 }
 
 .register-form__toggle {

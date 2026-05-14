@@ -3,6 +3,7 @@
 namespace app\controller\v1;
 
 use app\service\AuthLoginService;
+use app\service\AuthRegisterService;
 use app\service\AuthTokenService;
 use support\annotation\route\Route;
 use support\Request;
@@ -43,6 +44,36 @@ class AuthController
                 ],
             ],
         ]), $token);
+    }
+
+    #[Route('/api/v1/auth/register', 'POST')]
+    public function register(Request $request): Response
+    {
+        $service = new AuthRegisterService();
+        $result = $service->attempt($request);
+
+        if (!$result['ok']) {
+            return json([
+                'code' => 1,
+                'msg' => $result['msg'],
+                'data' => [
+                    'redirect' => $result['redirect'] ?? null,
+                ],
+            ])->withStatus(422);
+        }
+
+        return json([
+            'code' => 0,
+            'msg' => $result['msg'],
+            'data' => [
+                'redirect' => $result['redirect'],
+                'user' => [
+                    'id' => (int) $result['user']->id,
+                    'email' => (string) $result['user']->email,
+                    'display_name' => (string) ($result['user']->display_name ?? ''),
+                ],
+            ],
+        ]);
     }
 
     #[Route('/api/v1/auth/me', 'GET')]
