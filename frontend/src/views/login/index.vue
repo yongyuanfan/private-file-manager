@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+  name: 'LoginView',
+})
+
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+  name: 'RegisterView',
+})
+
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+  name: 'DashboardView',
+})
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
